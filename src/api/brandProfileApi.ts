@@ -56,11 +56,16 @@ export async function updateBrandProfileData(userId: string, data: BrandProfileF
     console.log("Saving brand profile data:", profileData);
 
     // First, check if the profile exists
-    const { data: existingProfile } = await supabase
+    const { data: existingProfile, error: checkError } = await supabase
       .from('brand_profiles')
       .select('id')
       .eq('id', userId)
       .maybeSingle();
+
+    if (checkError) {
+      console.error('Error checking if profile exists:', checkError);
+      return { success: false, error: checkError };
+    }
 
     let result;
     
