@@ -49,13 +49,15 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
     },
     enabled: !!profileId && isOpen && profileId.length > 0,
     retry: 1,
-    onError: (err: Error) => {
-      console.error("Profile fetch error in query:", err);
-      toast({
-        title: "Error loading profile",
-        description: err.message,
-        variant: "destructive",
-      });
+    meta: {
+      onError: (err: Error) => {
+        console.error("Profile fetch error in query:", err);
+        toast({
+          title: "Error loading profile",
+          description: err.message,
+          variant: "destructive",
+        });
+      }
     }
   });
   
