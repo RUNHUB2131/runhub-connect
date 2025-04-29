@@ -4,15 +4,26 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   Sidebar, 
   SidebarContent,
+  SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, User, FilePlus, FileText, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, User, Plus, ClipboardList, MessageSquare, LogOut } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 const BrandDashboardSidebar: React.FC = () => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { signOut } = useAuth();
+  const { toast } = useToast();
+  
+  // Check if the current path starts with a specific base path
+  const isPathActive = (basePath: string) => {
+    return currentPath === basePath || currentPath.startsWith(`${basePath}/`);
+  };
   
   const menuItems = [
     {
@@ -21,19 +32,19 @@ const BrandDashboardSidebar: React.FC = () => {
       icon: LayoutDashboard,
     },
     {
-      title: "Brand Profile",
+      title: "My Profile",
       path: "/dashboard/brand/profile",
       icon: User,
     },
     {
       title: "Post Opportunity",
       path: "/dashboard/brand/post-opportunity",
-      icon: FilePlus,
+      icon: Plus,
     },
     {
       title: "Manage Opportunities",
       path: "/dashboard/brand/manage-opportunities",
-      icon: FileText,
+      icon: ClipboardList,
     },
     {
       title: "Messages",
@@ -42,6 +53,23 @@ const BrandDashboardSidebar: React.FC = () => {
       disabled: true,
     }
   ];
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out",
+      });
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        title: "Sign out failed",
+        description: "There was an error signing out",
+        variant: "destructive",
+      });
+    }
+  };
   
   return (
     <Sidebar>
@@ -52,7 +80,7 @@ const BrandDashboardSidebar: React.FC = () => {
               <SidebarMenuItem key={item.path}>
                 <SidebarMenuButton 
                   asChild
-                  isActive={currentPath === item.path}
+                  isActive={isPathActive(item.path)}
                   tooltip={item.title}
                   aria-disabled={item.disabled}
                   className={item.disabled ? "opacity-50 pointer-events-none" : ""}
@@ -67,6 +95,18 @@ const BrandDashboardSidebar: React.FC = () => {
           </SidebarMenu>
         </div>
       </SidebarContent>
+      <SidebarFooter>
+        <div className="p-2">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={handleSignOut}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 };
