@@ -25,8 +25,15 @@ export async function fetchBrandProfileData(userId: string) {
 
 export async function updateBrandProfileData(userId: string, data: BrandProfileFormValues) {
   try {
-    const session = await supabase.auth.getSession();
-    const authUser = session.data.session?.user;
+    // Verify authentication status
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Authentication error:', sessionError);
+      return { success: false, error: sessionError };
+    }
+    
+    const authUser = sessionData.session?.user;
     
     if (!authUser) {
       console.error('Authentication error: No user session found');
@@ -44,7 +51,6 @@ export async function updateBrandProfileData(userId: string, data: BrandProfileF
     
     // Create a structured object that maps form fields to database columns
     const profileData = {
-      // Do not set id field for updates - this causes RLS issues
       company_name: data.companyName,
       location: data.location,
       industry: data.industry,
