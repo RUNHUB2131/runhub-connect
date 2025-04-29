@@ -62,7 +62,7 @@ const UserTypes: React.FC = () => {
                   <span className="text-navy-700">Track performance metrics for your sponsors</span>
                 </li>
               </ul>
-              <Link to="/auth/register?type=runclub">
+              <Link to="/user-type">
                 <Button className="w-full bg-orange-500 hover:bg-orange-600">
                   Sign up as a Run Club
                   <ArrowRight size={16} className="ml-2" />
@@ -113,7 +113,7 @@ const UserTypes: React.FC = () => {
                   <span className="text-navy-700">Measure campaign performance with detailed analytics</span>
                 </li>
               </ul>
-              <Link to="/auth/register?type=brand">
+              <Link to="/user-type">
                 <Button className="w-full bg-navy-700 hover:bg-navy-800">
                   Sign up as a Brand
                   <ArrowRight size={16} className="ml-2" />

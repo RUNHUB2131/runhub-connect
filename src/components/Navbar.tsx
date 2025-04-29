@@ -39,10 +39,10 @@ const Navbar: React.FC = () => {
         </nav>
         
         <div className="hidden md:flex items-center gap-4">
-          <Link to="/auth/login">
+          <Link to="/user-type">
             <Button variant="outline">Log in</Button>
           </Link>
-          <Link to="/auth/register">
+          <Link to="/user-type">
             <Button className="bg-orange-500 hover:bg-orange-600">Sign up</Button>
           </Link>
         </div>
@@ -69,10 +69,10 @@ const Navbar: React.FC = () => {
               About
             </Link>
             <div className="flex flex-col gap-2 mt-4 px-4">
-              <Link to="/auth/login" onClick={toggleMenu}>
+              <Link to="/user-type" onClick={toggleMenu}>
                 <Button variant="outline" className="w-full">Log in</Button>
               </Link>
-              <Link to="/auth/register" onClick={toggleMenu}>
+              <Link to="/user-type" onClick={toggleMenu}>
                 <Button className="w-full bg-orange-500 hover:bg-orange-600">Sign up</Button>
               </Link>
             </div>
