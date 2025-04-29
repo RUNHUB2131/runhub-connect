@@ -8,12 +8,13 @@ import {
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Users, MapPin, Globe, Instagram, Twitter, Facebook, Calendar, Clock } from "lucide-react";
+import { Users, MapPin, Globe, Instagram, Twitter, Facebook } from "lucide-react";
 import { fetchRunClubProfile } from '@/api/opportunityApi';
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 interface RunClubProfileModalProps {
   profileId: string;
@@ -26,7 +27,9 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
   isOpen,
   onClose
 }) => {
-  const { data: profile, isLoading, error } = useQuery({
+  console.log("RunClubProfileModal render with profileId:", profileId);
+  
+  const { data: profile, isLoading, error, refetch } = useQuery({
     queryKey: ['runclub-profile', profileId],
     queryFn: async () => {
       console.log("Fetching profile for ID:", profileId);
@@ -38,7 +41,8 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
       console.log("Fetched profile data:", data);
       return data;
     },
-    enabled: !!profileId && isOpen
+    enabled: !!profileId && isOpen && profileId.length > 0,
+    retry: 1
   });
   
   // Helper function to get initials from club name
@@ -67,8 +71,9 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
             <p>Loading profile...</p>
           </div>
         ) : error ? (
-          <div className="py-6 text-center text-red-500">
-            <p>Error loading profile. Please try again.</p>
+          <div className="py-6 text-center">
+            <p className="text-red-500 mb-4">Error loading profile: {error.message}</p>
+            <Button onClick={() => refetch()}>Try Again</Button>
           </div>
         ) : profile ? (
           <div className="space-y-6">
@@ -142,7 +147,9 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
             )}
             
             {/* Run Types & Event Experience */}
-            {profile.community_data && (profile.community_data.run_types?.length > 0 || profile.community_data.event_experience?.length > 0) && (
+            {profile.community_data && (
+              (profile.community_data.run_types?.length > 0 || 
+               profile.community_data.event_experience?.length > 0) && (
               <>
                 <Separator />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -169,10 +176,13 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
                   )}
                 </div>
               </>
-            )}
+            ))}
             
             {/* Social Media */}
-            {profile.social_media && (profile.social_media.instagram?.handle || profile.social_media.twitter?.handle || profile.social_media.facebook?.page) && (
+            {profile.social_media && (
+              (profile.social_media.instagram?.handle || 
+               profile.social_media.twitter?.handle || 
+               profile.social_media.facebook?.page) && (
               <>
                 <Separator />
                 <div>
@@ -216,11 +226,12 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
                   </div>
                 </div>
               </>
-            )}
+            ))}
           </div>
         ) : (
           <div className="py-6 text-center">
-            <p>No profile information available</p>
+            <p>No profile information available for ID: {profileId}</p>
+            <Button onClick={() => refetch()} className="mt-4">Retry</Button>
           </div>
         )}
       </DialogContent>

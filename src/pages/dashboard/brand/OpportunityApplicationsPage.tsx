@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Users, User, Check, X } from "lucide-react";
+import { ArrowLeft, Users, User, Check, X, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   fetchOpportunityById, 
@@ -41,6 +41,7 @@ const OpportunityApplicationsPage = () => {
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [acceptingApplicationId, setAcceptingApplicationId] = useState<string | null>(null);
   const [rejectingApplicationId, setRejectingApplicationId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Debug logging for component mount and ID
   useEffect(() => {
@@ -72,7 +73,7 @@ const OpportunityApplicationsPage = () => {
       console.log("Fetched applications data:", data);
       return data || [];
     },
-    retry: 2 // Retry twice if there's an error
+    retry: 1
   });
 
   // Refetch on mount to ensure we have the latest data
@@ -90,7 +91,30 @@ const OpportunityApplicationsPage = () => {
     }
   }, [applications, applicationsError]);
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      toast({
+        title: "Refreshed",
+        description: "Application data has been refreshed",
+      });
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const handleViewProfile = (profileId: string) => {
+    if (!profileId) {
+      toast({
+        title: "Error",
+        description: "Profile ID is missing",
+        variant: "destructive",
+      });
+      return;
+    }
     console.log("Viewing profile:", profileId);
     setSelectedProfileId(profileId);
   };
@@ -206,36 +230,6 @@ const OpportunityApplicationsPage = () => {
     );
   }
 
-  if (applicationsError) {
-    return (
-      <div className="flex-1 p-6 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/dashboard/brand/manage-opportunities')}
-              className="mb-4"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to opportunities
-            </Button>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Error Loading Applications</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-red-500">There was a problem loading the applications. Please try again later.</p>
-              <Button onClick={() => refetch()} className="mt-4">
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex-1 p-6 bg-gray-50">
       <div className="max-w-4xl mx-auto">
@@ -257,7 +251,30 @@ const OpportunityApplicationsPage = () => {
           </div>
         )}
 
-        {applications && applications.length > 0 ? (
+        <div className="flex justify-end mb-4">
+          <Button 
+            onClick={handleRefresh} 
+            variant="outline" 
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh Data
+          </Button>
+        </div>
+
+        {applicationsError ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Error Loading Applications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-red-500">There was a problem loading the applications: {applicationsError.message}</p>
+              <Button onClick={() => refetch()} className="mt-4">
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        ) : applications && applications.length > 0 ? (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -285,7 +302,7 @@ const OpportunityApplicationsPage = () => {
                       <TableCell>{getLocation(application)}</TableCell>
                       <TableCell>
                         <span className={`capitalize px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(application.status)}`}>
-                          {application.status}
+                          {application.status || 'pending'}
                         </span>
                       </TableCell>
                       <TableCell>{formatDate(application.created_at)}</TableCell>
@@ -295,6 +312,7 @@ const OpportunityApplicationsPage = () => {
                             variant="ghost" 
                             size="sm"
                             onClick={() => handleViewProfile(application.user_id)}
+                            disabled={!application.user_id}
                           >
                             <User className="h-4 w-4 mr-1" />
                             View Profile
