@@ -29,9 +29,26 @@ export async function updateBrandProfileData(userId: string, data: BrandProfileF
     const targetAudience = Array.isArray(data.targetAudience) ? data.targetAudience : [];
     const previousSponsorship = Array.isArray(data.previousSponsorship) ? data.previousSponsorship : [];
     
+    // Make absolutely sure the ID matches the authenticated user
+    // This is critical for RLS policies to work correctly
+    const currentSession = await supabase.auth.getSession();
+    const authenticatedUserId = currentSession.data.session?.user.id;
+    
+    if (!authenticatedUserId) {
+      console.error('No authenticated user found');
+      return { success: false, error: new Error('No authenticated user found') };
+    }
+    
+    if (authenticatedUserId !== userId) {
+      console.error('User ID mismatch: authenticated user ID does not match provided user ID');
+      return { success: false, error: new Error('User ID mismatch') };
+    }
+    
+    console.log("Authenticated user ID verified:", authenticatedUserId);
+    
     // Create a structured object that maps form fields to database columns
     const profileData = {
-      id: userId, // This is essential for Row Level Security
+      id: authenticatedUserId, // Always use the authenticated user ID for RLS
       company_name: data.companyName,
       location: data.location,
       industry: data.industry,
@@ -59,7 +76,7 @@ export async function updateBrandProfileData(userId: string, data: BrandProfileF
     const { data: existingProfile, error: checkError } = await supabase
       .from('brand_profiles')
       .select('id')
-      .eq('id', userId)
+      .eq('id', authenticatedUserId)
       .maybeSingle();
 
     if (checkError) {
@@ -75,13 +92,13 @@ export async function updateBrandProfileData(userId: string, data: BrandProfileF
       result = await supabase
         .from('brand_profiles')
         .update(profileData)
-        .eq('id', userId);
+        .eq('id', authenticatedUserId);
     } else {
-      // Insert new profile
+      // Insert new profile with the authenticated user's ID
       console.log("Creating new brand profile...");
       result = await supabase
         .from('brand_profiles')
-        .insert(profileData);
+        .insert([profileData]); // Explicitly use array format for insert
     }
 
     const { error } = result;

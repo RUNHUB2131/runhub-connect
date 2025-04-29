@@ -35,10 +35,14 @@ export function useBrandProfileForm(initialValues = defaultBrandProfileValues) {
 
   // Fetch profile data when user is available
   useEffect(() => {
-    if (user) {
-      loadProfileData(user.id);
-      setProfileId(user.id);
+    if (!user) {
+      console.log("No authenticated user available");
+      return;
     }
+    
+    console.log("Authenticated user found, ID:", user.id);
+    loadProfileData(user.id);
+    setProfileId(user.id);
   }, [user]);
 
   // Load profile data from the API
@@ -135,13 +139,17 @@ export function useBrandProfileForm(initialValues = defaultBrandProfileValues) {
       console.log("Updating brand profile for user:", user.id);
       console.log("Form data before submission:", data);
       
-      // Update the profile in Supabase
+      // Make sure to use the authenticated user ID for RLS
       const result = await updateBrandProfileData(user.id, data);
 
       if (!result.success) {
+        const errorMessage = result.error instanceof Error 
+          ? result.error.message 
+          : 'Unknown error occurred';
+          
         toast({
           title: "Error updating profile",
-          description: result.error.message,
+          description: errorMessage,
           variant: "destructive"
         });
         setIsLoading(false);
@@ -154,6 +162,10 @@ export function useBrandProfileForm(initialValues = defaultBrandProfileValues) {
       });
       
       setIsEditing(null);
+      
+      // Reload the profile data to ensure we have the latest
+      await loadProfileData(user.id);
+      
     } catch (error) {
       console.error('Error updating brand profile:', error);
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
