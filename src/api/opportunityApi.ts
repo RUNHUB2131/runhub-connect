@@ -16,7 +16,14 @@ export async function createOpportunity(opportunityData: OpportunityFormValues) 
     const { data, error } = await supabase
       .from("opportunities")
       .insert({
-        ...opportunityData,
+        title: opportunityData.title,
+        description: opportunityData.description,
+        detailed_description: opportunityData.detailed_description || null,
+        type: opportunityData.type,
+        reward: opportunityData.reward,
+        deadline: opportunityData.deadline,
+        duration: opportunityData.duration,
+        requirements: opportunityData.requirements || null,
         brand_id: user.id,
       })
       .select()
