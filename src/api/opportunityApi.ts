@@ -203,13 +203,14 @@ export async function fetchOpportunityApplications(opportunityId: string) {
 
     console.log("Fetching applications for opportunity:", opportunityId);
 
-    // First get the applications for this opportunity
+    // First get the applications for this opportunity - without trying to join with profiles
     const { data: applications, error: applicationsError } = await supabase
       .from("applications")
       .select("*")
       .eq("opportunity_id", opportunityId);
     
     if (applicationsError) {
+      console.error("Error fetching applications:", applicationsError);
       throw new Error("Failed to fetch applications: " + applicationsError.message);
     }
 
@@ -220,24 +221,34 @@ export async function fetchOpportunityApplications(opportunityId: string) {
       return { data: [], error: null };
     }
     
-    // For each application, fetch the runclub profile
-    const processedApplications = await Promise.all(applications.map(async (app) => {
-      console.log("Fetching profile for user ID:", app.user_id);
+    // Process each application separately to get the profile data
+    const processedApplications = [];
+    
+    for (const app of applications) {
+      console.log("Processing application for user ID:", app.user_id);
       
-      const { data: profile, error: profileError } = await supabase
-        .from("runclub_profiles")
-        .select("*")
-        .eq("id", app.user_id)
-        .single();
-        
-      if (profileError) {
-        console.warn("Error fetching profile for user", app.user_id, profileError);
-        return { ...app, profile: null };
+      try {
+        // Get the profile for this application's user_id
+        const { data: profile, error: profileError } = await supabase
+          .from("runclub_profiles")
+          .select("*")
+          .eq("id", app.user_id)
+          .single();
+          
+        if (profileError) {
+          console.warn("Error fetching profile for user", app.user_id, profileError);
+          // Add the application even if we couldn't find the profile
+          processedApplications.push({ ...app, profile: null });
+        } else {
+          console.log("Found profile for user:", app.user_id, profile);
+          processedApplications.push({ ...app, profile });
+        }
+      } catch (err) {
+        console.error("Error processing application:", err);
+        // Still include the application even if there was an error
+        processedApplications.push({ ...app, profile: null });
       }
-      
-      console.log("Found profile for user:", app.user_id, profile);
-      return { ...app, profile };
-    }));
+    }
 
     console.log("Processed applications with profiles:", processedApplications);
     

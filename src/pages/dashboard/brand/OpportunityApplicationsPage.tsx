@@ -56,7 +56,7 @@ const OpportunityApplicationsPage = () => {
     }
   });
 
-  const { data: applications, isLoading: isLoadingApplications, error: applicationsError } = useQuery({
+  const { data: applications, isLoading: isLoadingApplications, error: applicationsError, refetch } = useQuery({
     queryKey: ['opportunity-applications', id],
     queryFn: async () => {
       if (!id) throw new Error('Opportunity ID is required');
@@ -65,8 +65,15 @@ const OpportunityApplicationsPage = () => {
       console.log("Fetched applications data:", data);
       return data || [];
     },
-    retry: 1, // Retry once if there's an error
+    retry: 2 // Retry twice if there's an error
   });
+
+  // Refetch on mount to ensure we have the latest data
+  useEffect(() => {
+    if (id) {
+      refetch();
+    }
+  }, [id, refetch]);
 
   // Debug logging for applications data
   useEffect(() => {
