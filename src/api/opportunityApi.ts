@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { OpportunityFormValues } from "@/schemas/opportunityFormSchema";
 
@@ -292,13 +291,12 @@ export async function fetchRunClubProfile(profileId: string) {
   }
   
   try {
-    // First, check if this is a user_id from the auth system
-    // and try to get the profile from the runclub_profiles table
+    // First, check if this matches a profile in the runclub_profiles table directly
     const { data, error } = await supabase
       .from("runclub_profiles")
       .select("*")
       .eq("id", profileId)
-      .maybeSingle(); // Use maybeSingle() instead of single() to avoid error when no row is found
+      .maybeSingle();
     
     if (error) {
       console.error("Error fetching run club profile:", error);
@@ -310,9 +308,8 @@ export async function fetchRunClubProfile(profileId: string) {
       return { data, error: null };
     }
     
-    // If no profile was found, it might be because profileId is an auth.uid 
-    // and we need to check if there's a runclub_profile with this user ID
-    console.log("No direct profile match, checking if this is an auth user ID");
+    // If no profile was found, check the profiles table to determine user_type
+    console.log("No direct profile match, checking profiles table");
     
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
