@@ -25,36 +25,31 @@ export async function fetchBrandProfileData(userId: string) {
 
 export async function updateBrandProfileData(userId: string, data: BrandProfileFormValues) {
   try {
+    const session = await supabase.auth.getSession();
+    const authUser = session.data.session?.user;
+    
+    if (!authUser) {
+      console.error('Authentication error: No user session found');
+      return { success: false, error: new Error('Authentication error: Please log in again') };
+    }
+    
+    if (authUser.id !== userId) {
+      console.error('Security error: User ID mismatch');
+      return { success: false, error: new Error('Security error: Invalid user ID') };
+    }
+    
     // Ensure arrays are initialized
     const targetAudience = Array.isArray(data.targetAudience) ? data.targetAudience : [];
     const previousSponsorship = Array.isArray(data.previousSponsorship) ? data.previousSponsorship : [];
     
-    // Make absolutely sure the ID matches the authenticated user
-    // This is critical for RLS policies to work correctly
-    const currentSession = await supabase.auth.getSession();
-    const authenticatedUserId = currentSession.data.session?.user.id;
-    
-    if (!authenticatedUserId) {
-      console.error('No authenticated user found');
-      return { success: false, error: new Error('No authenticated user found') };
-    }
-    
-    if (authenticatedUserId !== userId) {
-      console.error('User ID mismatch: authenticated user ID does not match provided user ID');
-      return { success: false, error: new Error('User ID mismatch') };
-    }
-    
-    console.log("Authenticated user ID verified:", authenticatedUserId);
-    
     // Create a structured object that maps form fields to database columns
     const profileData = {
-      id: authenticatedUserId, // Always use the authenticated user ID for RLS
+      // Do not set id field for updates - this causes RLS issues
       company_name: data.companyName,
       location: data.location,
       industry: data.industry,
       description: data.description,
       website: data.website,
-      // Social media and other data stored as JSON
       social_media: {
         linkedin: data.linkedinHandle,
         twitter: data.twitterHandle,
@@ -70,13 +65,13 @@ export async function updateBrandProfileData(userId: string, data: BrandProfileF
       updated_at: new Date().toISOString()
     };
 
-    console.log("Saving brand profile data:", profileData);
+    console.log("Processing profile update for user:", userId);
 
     // First, check if the profile exists
     const { data: existingProfile, error: checkError } = await supabase
       .from('brand_profiles')
       .select('id')
-      .eq('id', authenticatedUserId)
+      .eq('id', userId)
       .maybeSingle();
 
     if (checkError) {
@@ -92,13 +87,19 @@ export async function updateBrandProfileData(userId: string, data: BrandProfileF
       result = await supabase
         .from('brand_profiles')
         .update(profileData)
-        .eq('id', authenticatedUserId);
+        .eq('id', userId);
     } else {
-      // Insert new profile with the authenticated user's ID
+      // Insert new profile
       console.log("Creating new brand profile...");
+      // For new profiles, we must include the ID
+      const newProfileData = {
+        id: userId,
+        ...profileData
+      };
+      
       result = await supabase
         .from('brand_profiles')
-        .insert([profileData]); // Explicitly use array format for insert
+        .insert([newProfileData]);
     }
 
     const { error } = result;

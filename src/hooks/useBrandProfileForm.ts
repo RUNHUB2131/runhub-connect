@@ -137,15 +137,25 @@ export function useBrandProfileForm(initialValues = defaultBrandProfileValues) {
       }
 
       console.log("Updating brand profile for user:", user.id);
-      console.log("Form data before submission:", data);
       
-      // Make sure to use the authenticated user ID for RLS
       const result = await updateBrandProfileData(user.id, data);
 
       if (!result.success) {
-        const errorMessage = result.error instanceof Error 
-          ? result.error.message 
-          : 'Unknown error occurred';
+        // Get the detailed error message
+        let errorMessage = "Unknown error occurred";
+        
+        if (result.error) {
+          // If error is an Error object
+          if (result.error instanceof Error) {
+            errorMessage = result.error.message;
+          } 
+          // If error is from Supabase
+          else if (typeof result.error === 'object' && result.error !== null) {
+            errorMessage = result.error.message || JSON.stringify(result.error);
+          }
+        }
+        
+        console.error("Profile update error details:", result.error);
           
         toast({
           title: "Error updating profile",
