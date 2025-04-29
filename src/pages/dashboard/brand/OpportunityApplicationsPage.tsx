@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Users, User, Check, X, RefreshCw } from "lucide-react";
+import { ArrowLeft, Users, User, Check, X, RefreshCw, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   fetchOpportunityById, 
@@ -266,10 +266,13 @@ const OpportunityApplicationsPage = () => {
         {applicationsError ? (
           <Card>
             <CardHeader>
-              <CardTitle>Error Loading Applications</CardTitle>
+              <CardTitle className="flex items-center text-red-600">
+                <AlertCircle className="h-5 w-5 mr-2" />
+                Error Loading Applications
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-red-500">There was a problem loading the applications: {applicationsError.message}</p>
+              <p className="text-red-500 mb-4">There was a problem loading the applications: {applicationsError.message}</p>
               <Button onClick={() => refetch()} className="mt-4">
                 Try Again
               </Button>

@@ -11,10 +11,11 @@ import {
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Users, MapPin, Globe, Instagram, Twitter, Facebook } from "lucide-react";
+import { Users, MapPin, Globe, Instagram, Twitter, Facebook, AlertCircle } from "lucide-react";
 import { fetchRunClubProfile } from '@/api/opportunityApi';
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface RunClubProfileModalProps {
   profileId: string;
@@ -27,12 +28,17 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
   isOpen,
   onClose
 }) => {
+  const { toast } = useToast();
   console.log("RunClubProfileModal render with profileId:", profileId);
   
   const { data: profile, isLoading, error, refetch } = useQuery({
     queryKey: ['runclub-profile', profileId],
     queryFn: async () => {
       console.log("Fetching profile for ID:", profileId);
+      if (!profileId || profileId.trim() === '') {
+        throw new Error("Invalid profile ID");
+      }
+      
       const { data, error } = await fetchRunClubProfile(profileId);
       if (error) {
         console.error("Error fetching profile:", error);
@@ -42,7 +48,15 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
       return data;
     },
     enabled: !!profileId && isOpen && profileId.length > 0,
-    retry: 1
+    retry: 1,
+    onError: (err: Error) => {
+      console.error("Profile fetch error in query:", err);
+      toast({
+        title: "Error loading profile",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
   });
   
   // Helper function to get initials from club name
@@ -72,8 +86,19 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
           </div>
         ) : error ? (
           <div className="py-6 text-center">
-            <p className="text-red-500 mb-4">Error loading profile: {error.message}</p>
-            <Button onClick={() => refetch()}>Try Again</Button>
+            <div className="flex flex-col items-center gap-4">
+              <AlertCircle className="h-12 w-12 text-red-500" />
+              <div className="text-center">
+                <p className="text-red-500 font-medium mb-1">Error loading profile</p>
+                <p className="text-sm text-gray-600 mb-4">{error.message}</p>
+                <Button 
+                  onClick={() => refetch()} 
+                  variant="outline"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </div>
           </div>
         ) : profile ? (
           <div className="space-y-6">
@@ -230,8 +255,11 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
           </div>
         ) : (
           <div className="py-6 text-center">
-            <p>No profile information available for ID: {profileId}</p>
-            <Button onClick={() => refetch()} className="mt-4">Retry</Button>
+            <div className="flex flex-col items-center gap-4">
+              <AlertCircle className="h-12 w-12 text-amber-500" />
+              <p className="text-gray-600">No profile information available</p>
+              <Button onClick={() => refetch()} variant="outline" className="mt-2">Retry</Button>
+            </div>
           </div>
         )}
       </DialogContent>
