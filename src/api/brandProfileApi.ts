@@ -71,12 +71,14 @@ export async function updateBrandProfileData(userId: string, data: BrandProfileF
     
     if (existingProfile) {
       // Update existing profile
+      console.log("Updating existing brand profile...");
       result = await supabase
         .from('brand_profiles')
         .update(profileData)
         .eq('id', userId);
     } else {
       // Insert new profile
+      console.log("Creating new brand profile...");
       result = await supabase
         .from('brand_profiles')
         .insert(profileData);
@@ -89,6 +91,7 @@ export async function updateBrandProfileData(userId: string, data: BrandProfileF
       return { success: false, error };
     }
 
+    console.log("Brand profile updated successfully");
     return { success: true };
   } catch (error) {
     console.error('Error updating brand profile:', error);
