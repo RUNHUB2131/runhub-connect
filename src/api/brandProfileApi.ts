@@ -55,9 +55,29 @@ export async function updateBrandProfileData(userId: string, data: BrandProfileF
 
     console.log("Saving brand profile data:", profileData);
 
-    const { error } = await supabase
+    // First, check if the profile exists
+    const { data: existingProfile } = await supabase
       .from('brand_profiles')
-      .upsert(profileData);
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
+
+    let result;
+    
+    if (existingProfile) {
+      // Update existing profile
+      result = await supabase
+        .from('brand_profiles')
+        .update(profileData)
+        .eq('id', userId);
+    } else {
+      // Insert new profile
+      result = await supabase
+        .from('brand_profiles')
+        .insert(profileData);
+    }
+
+    const { error } = result;
 
     if (error) {
       console.error('Error updating brand profile:', error);
