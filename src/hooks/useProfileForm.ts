@@ -148,6 +148,7 @@ export function useProfileForm(initialValues = defaultProfileValues) {
       }
 
       console.log("Updating profile for user:", user.id);
+      console.log("Form data before submission:", data);
       
       // Update the profile in Supabase
       const result = await updateProfileData(user.id, data);

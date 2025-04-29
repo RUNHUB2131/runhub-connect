@@ -15,6 +15,7 @@ export async function fetchProfileData(userId: string) {
       return null;
     }
 
+    console.log("Fetched profile data:", data);
     return data;
   } catch (error) {
     console.error('Error fetching profile data:', error);

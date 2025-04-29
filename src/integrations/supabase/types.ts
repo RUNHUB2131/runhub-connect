@@ -83,34 +83,40 @@ export type Database = {
       runclub_profiles: {
         Row: {
           club_name: string | null
+          community_data: Json | null
           created_at: string
           description: string | null
           id: string
           location: string | null
           logo_url: string | null
           member_count: number | null
+          social_media: Json | null
           updated_at: string
           website: string | null
         }
         Insert: {
           club_name?: string | null
+          community_data?: Json | null
           created_at?: string
           description?: string | null
           id: string
           location?: string | null
           logo_url?: string | null
           member_count?: number | null
+          social_media?: Json | null
           updated_at?: string
           website?: string | null
         }
         Update: {
           club_name?: string | null
+          community_data?: Json | null
           created_at?: string
           description?: string | null
           id?: string
           location?: string | null
           logo_url?: string | null
           member_count?: number | null
+          social_media?: Json | null
           updated_at?: string
           website?: string | null
         }
