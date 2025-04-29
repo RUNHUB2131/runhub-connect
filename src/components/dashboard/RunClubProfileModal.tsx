@@ -26,11 +26,16 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
   isOpen,
   onClose
 }) => {
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, error } = useQuery({
     queryKey: ['runclub-profile', profileId],
     queryFn: async () => {
+      console.log("Fetching profile for ID:", profileId);
       const { data, error } = await fetchRunClubProfile(profileId);
-      if (error) throw new Error(error);
+      if (error) {
+        console.error("Error fetching profile:", error);
+        throw new Error(error);
+      }
+      console.log("Fetched profile data:", data);
       return data;
     },
     enabled: !!profileId && isOpen
@@ -60,6 +65,10 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
         {isLoading ? (
           <div className="flex justify-center py-8">
             <p>Loading profile...</p>
+          </div>
+        ) : error ? (
+          <div className="py-6 text-center text-red-500">
+            <p>Error loading profile. Please try again.</p>
           </div>
         ) : profile ? (
           <div className="space-y-6">

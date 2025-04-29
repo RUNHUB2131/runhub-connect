@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { OpportunityFormValues } from "@/schemas/opportunityFormSchema";
 
@@ -204,35 +203,23 @@ export async function fetchOpportunityApplications(opportunityId: string) {
     // First get the applications for this opportunity
     const { data: applications, error: applicationsError } = await supabase
       .from("applications")
-      .select("*")
+      .select(`
+        *,
+        runclub_profiles:user_id(*)
+      `)
       .eq("opportunity_id", opportunityId);
     
     if (applicationsError) {
       throw new Error("Failed to fetch applications: " + applicationsError.message);
     }
     
-    // For each application, fetch the user's profile
-    const applicationsWithProfiles = await Promise.all(
-      (applications || []).map(async (application) => {
-        // Get the runclub profile for this user
-        const { data: profile, error: profileError } = await supabase
-          .from("runclub_profiles")
-          .select("*")
-          .eq("id", application.user_id)
-          .single();
-          
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.warn("Error fetching profile for user:", application.user_id, profileError);
-        }
-        
-        return {
-          ...application,
-          profile: profile || null
-        };
-      })
-    );
+    // Process applications to move profile data to a cleaner structure
+    const processedApplications = applications.map(app => ({
+      ...app,
+      profile: app.runclub_profiles || null
+    }));
 
-    return { data: applicationsWithProfiles, error: null };
+    return { data: processedApplications, error: null };
   } catch (error: any) {
     console.error("Error fetching applications:", error);
     return { data: null, error: error.message };
@@ -248,6 +235,7 @@ export async function fetchRunClubProfile(profileId: string) {
       .single();
 
     if (error) {
+      console.error("Error details:", error);
       throw new Error("Failed to fetch run club profile: " + error.message);
     }
 

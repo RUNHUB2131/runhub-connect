@@ -57,6 +57,7 @@ const OpportunityApplicationsPage = () => {
       if (!id) throw new Error('Opportunity ID is required');
       const { data, error } = await fetchOpportunityApplications(id);
       if (error) throw new Error(error);
+      console.log("Fetched applications data:", data);
       return data || [];
     }
   });
@@ -124,6 +125,22 @@ const OpportunityApplicationsPage = () => {
     }
   };
 
+  // Debugging helper to safely get club name
+  const getClubName = (application: any) => {
+    if (application?.profile?.club_name) {
+      return application.profile.club_name;
+    }
+    return 'Unnamed Run Club';
+  };
+
+  // Debugging helper to safely get location
+  const getLocation = (application: any) => {
+    if (application?.profile?.location) {
+      return application.profile.location;
+    }
+    return 'Unknown';
+  };
+
   if (isLoadingOpportunity || isLoadingApplications) {
     return (
       <div className="flex-1 p-6 bg-gray-50 flex items-center justify-center">
@@ -176,9 +193,9 @@ const OpportunityApplicationsPage = () => {
                   {applications.map((application: any) => (
                     <TableRow key={application.id}>
                       <TableCell className="font-medium">
-                        {application.profile?.club_name || 'Unnamed Run Club'}
+                        {getClubName(application)}
                       </TableCell>
-                      <TableCell>{application.profile?.location || 'Unknown'}</TableCell>
+                      <TableCell>{getLocation(application)}</TableCell>
                       <TableCell>
                         <span className={`capitalize px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(application.status)}`}>
                           {application.status}
@@ -213,7 +230,7 @@ const OpportunityApplicationsPage = () => {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Accept Application</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Are you sure you want to accept this application from {application.profile?.club_name || 'this run club'}?
+                                    Are you sure you want to accept this application from {getClubName(application)}?
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
