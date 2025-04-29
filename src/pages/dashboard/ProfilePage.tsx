@@ -1,27 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Users, Instagram, Twitter, Facebook, Link, ExternalLink, Plus, X, Loader2 } from "lucide-react";
+import { User, Users, Instagram, Twitter, Facebook, ExternalLink, Plus, X, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import { RUN_TYPES, EVENT_EXPERIENCES, DEMOGRAPHIC_OPTIONS } from "@/lib/constants";
 import { useProfileForm } from "@/hooks/useProfileForm";
 import { ProfileFormValues } from "@/schemas/profileFormSchema";
-import { useToast } from "@/hooks/use-toast";
 
 const ProfilePage: React.FC = () => {
-  const { toast } = useToast();
   const {
     form,
     isEditing,
     isLoading,
     selectedRunType,
     selectedEventExp,
-    profileId,
-    user,
     setSelectedRunType,
     setSelectedEventExp,
     toggleEditSection,
@@ -31,116 +26,6 @@ const ProfilePage: React.FC = () => {
     addEventExperience,
     removeEventExperience
   } = useProfileForm();
-
-  // Set up real-time subscription to profile updates
-  useEffect(() => {
-    // Fetch the current user's ID
-    const fetchUserId = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session && session.user) {
-        console.log("Found authenticated user:", session.user.id);
-        // Fetch user's profile data
-        await fetchProfileData(session.user.id);
-      } else {
-        console.log("No authenticated session found");
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to view and edit your profile.",
-          variant: "destructive"
-        });
-      }
-    };
-
-    fetchUserId();
-
-    // Return cleanup function
-    return () => {
-      // Clean up subscriptions when component unmounts
-    };
-  }, []);
-
-  // Set up real-time subscription when profileId is available
-  useEffect(() => {
-    if (!profileId) return;
-
-    console.log("Setting up real-time subscription for profile:", profileId);
-    
-    // Subscribe to changes in the runclub_profiles table for this specific profile
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'runclub_profiles',
-          filter: `id=eq.${profileId}`
-        },
-        (payload) => {
-          console.log('Profile update received:', payload);
-          if (payload.new) {
-            // Update the form with the new data
-            updateFormWithProfileData(payload.new);
-          }
-        }
-      )
-      .subscribe();
-
-    // Clean up subscription when component unmounts or profileId changes
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [profileId]);
-
-  // Fetch profile data from Supabase
-  const fetchProfileData = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('runclub_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile data:', error);
-        return;
-      }
-
-      if (data) {
-        updateFormWithProfileData(data);
-      }
-    } catch (error) {
-      console.error('Error fetching profile data:', error);
-    }
-  };
-
-  // Update form with profile data
-  const updateFormWithProfileData = (profileData: any) => {
-    // Only update if we're not currently editing
-    if (!isEditing) {
-      // Map database fields to form fields
-      form.reset({
-        clubName: profileData.club_name || form.getValues("clubName"),
-        location: profileData.location || form.getValues("location"),
-        memberCount: profileData.member_count || form.getValues("memberCount"),
-        description: profileData.description || form.getValues("description"),
-        website: profileData.website || form.getValues("website"),
-        // Map other fields as needed
-        // For fields not in the database yet, keep the current form values
-        instagramHandle: form.getValues("instagramHandle"),
-        instagramFollowers: form.getValues("instagramFollowers"),
-        twitterHandle: form.getValues("twitterHandle"),
-        twitterFollowers: form.getValues("twitterFollowers"),
-        facebookPage: form.getValues("facebookPage"),
-        facebookFollowers: form.getValues("facebookFollowers"),
-        averageGroupSize: form.getValues("averageGroupSize"),
-        coreDemographic: form.getValues("coreDemographic"),
-        runTypes: form.getValues("runTypes"),
-        eventExperience: form.getValues("eventExperience")
-      });
-    }
-  };
 
   // Format social media URL
   const formatSocialUrl = (platform: string, handle: string) => {

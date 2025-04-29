@@ -41,11 +41,26 @@ export function useProfileForm(initialValues = defaultProfileValues) {
 
   // Load profile data from the API
   const loadProfileData = useCallback(async (userId: string) => {
-    const data = await fetchProfileData(userId);
-    if (data) {
-      updateFormWithProfileData(data);
+    setIsLoading(true);
+    try {
+      const data = await fetchProfileData(userId);
+      if (data) {
+        console.log("Profile data loaded:", data);
+        updateFormWithProfileData(data);
+      } else {
+        console.log("No profile data found");
+      }
+    } catch (error) {
+      console.error("Error loading profile data:", error);
+      toast({
+        title: "Error loading profile",
+        description: "Could not load your profile data",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   // Toggle section editing
   const toggleEditSection = useCallback((section: string | null) => {
@@ -56,26 +71,49 @@ export function useProfileForm(initialValues = defaultProfileValues) {
   const updateFormWithProfileData = useCallback((profileData: any) => {
     // Only update if we're not currently editing
     if (!isEditing) {
+      console.log("Updating form with profile data:", profileData);
+      
       // Map database fields to form fields
-      form.reset({
-        clubName: profileData.club_name || form.getValues("clubName"),
-        location: profileData.location || form.getValues("location"),
-        memberCount: profileData.member_count || form.getValues("memberCount"),
-        description: profileData.description || form.getValues("description"),
-        website: profileData.website || form.getValues("website"),
-        // Map other fields as needed
-        // For fields not in the database yet, keep the current form values
-        instagramHandle: form.getValues("instagramHandle"),
-        instagramFollowers: form.getValues("instagramFollowers"),
-        twitterHandle: form.getValues("twitterHandle"),
-        twitterFollowers: form.getValues("twitterFollowers"),
-        facebookPage: form.getValues("facebookPage"),
-        facebookFollowers: form.getValues("facebookFollowers"),
-        averageGroupSize: form.getValues("averageGroupSize"),
-        coreDemographic: form.getValues("coreDemographic"),
-        runTypes: form.getValues("runTypes"),
-        eventExperience: form.getValues("eventExperience")
-      });
+      const formData: Partial<ProfileFormValues> = {
+        clubName: profileData.club_name || '',
+        location: profileData.location || '',
+        memberCount: profileData.member_count || 0,
+        description: profileData.description || '',
+        website: profileData.website || '',
+      };
+      
+      // Extract social media data if available
+      if (profileData.social_media) {
+        const social = profileData.social_media;
+        
+        if (social.instagram) {
+          formData.instagramHandle = social.instagram.handle || '';
+          formData.instagramFollowers = social.instagram.followers || 0;
+        }
+        
+        if (social.twitter) {
+          formData.twitterHandle = social.twitter.handle || '';
+          formData.twitterFollowers = social.twitter.followers || 0;
+        }
+        
+        if (social.facebook) {
+          formData.facebookPage = social.facebook.page || '';
+          formData.facebookFollowers = social.facebook.followers || 0;
+        }
+      }
+      
+      // Extract community data if available
+      if (profileData.community_data) {
+        const community = profileData.community_data;
+        
+        formData.averageGroupSize = community.average_group_size || 0;
+        formData.coreDemographic = community.core_demographic || '';
+        formData.runTypes = community.run_types || [];
+        formData.eventExperience = community.event_experience || [];
+      }
+      
+      // Update the form with the extracted data
+      form.reset(formData);
     }
   }, [form, isEditing]);
 

@@ -24,18 +24,44 @@ export async function fetchProfileData(userId: string) {
 
 export async function updateProfileData(userId: string, data: ProfileFormValues) {
   try {
+    // Create a structured object that maps form fields to database columns
+    const profileData = {
+      id: userId, // This is essential for Row Level Security
+      club_name: data.clubName,
+      location: data.location,
+      member_count: data.memberCount,
+      description: data.description,
+      website: data.website,
+      // Social media fields stored as JSON
+      social_media: {
+        instagram: {
+          handle: data.instagramHandle,
+          followers: data.instagramFollowers
+        },
+        twitter: {
+          handle: data.twitterHandle,
+          followers: data.twitterFollowers
+        },
+        facebook: {
+          page: data.facebookPage,
+          followers: data.facebookFollowers
+        }
+      },
+      // Community data
+      community_data: {
+        average_group_size: data.averageGroupSize,
+        core_demographic: data.coreDemographic,
+        run_types: data.runTypes,
+        event_experience: data.eventExperience
+      },
+      updated_at: new Date().toISOString()
+    };
+
+    console.log("Saving profile data:", profileData);
+
     const { error } = await supabase
       .from('runclub_profiles')
-      .upsert({
-        id: userId, // This is essential for Row Level Security
-        club_name: data.clubName,
-        location: data.location,
-        member_count: data.memberCount,
-        description: data.description,
-        website: data.website,
-        // Add other fields as needed
-        updated_at: new Date().toISOString()
-      });
+      .upsert(profileData);
 
     if (error) {
       console.error('Error updating profile:', error);
