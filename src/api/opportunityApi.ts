@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { OpportunityFormValues } from "@/schemas/opportunityFormSchema";
 
@@ -189,5 +188,54 @@ export async function deleteApplication(applicationId: string) {
   } catch (error: any) {
     console.error("Error deleting application:", error);
     return { error: error.message };
+  }
+}
+
+export async function fetchOpportunityApplications(opportunityId: string) {
+  try {
+    // Get the current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      throw new Error("Authentication error: " + (userError?.message || "User not found"));
+    }
+
+    // Fetch applications for this specific opportunity
+    // Also join with runclub_profiles to get applicant details
+    const { data, error } = await supabase
+      .from("applications")
+      .select(`
+        *,
+        profile:runclub_profiles(*)
+      `)
+      .eq("opportunity_id", opportunityId);
+
+    if (error) {
+      throw new Error("Failed to fetch applications: " + error.message);
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error("Error fetching applications:", error);
+    return { data: null, error: error.message };
+  }
+}
+
+export async function fetchRunClubProfile(profileId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("runclub_profiles")
+      .select("*")
+      .eq("id", profileId)
+      .single();
+
+    if (error) {
+      throw new Error("Failed to fetch run club profile: " + error.message);
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error("Error fetching run club profile:", error);
+    return { data: null, error: error.message };
   }
 }

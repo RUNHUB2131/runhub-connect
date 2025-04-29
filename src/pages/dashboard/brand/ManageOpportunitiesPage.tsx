@@ -90,7 +90,7 @@ const ManageOpportunitiesPage: React.FC = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          // View applications logic (to be implemented)
+                          navigate(`/dashboard/brand/opportunity/${opportunity.id}/applications`);
                         }}
                       >
                         <Eye className="h-4 w-4 mr-1" />

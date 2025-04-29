@@ -1,0 +1,156 @@
+
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Users, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { fetchOpportunityById, fetchOpportunityApplications } from '@/api/opportunityApi';
+import RunClubProfileModal from '@/components/dashboard/RunClubProfileModal';
+
+const OpportunityApplicationsPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+
+  const { data: opportunity, isLoading: isLoadingOpportunity } = useQuery({
+    queryKey: ['opportunity', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Opportunity ID is required');
+      const { data, error } = await fetchOpportunityById(id);
+      if (error) throw new Error(error);
+      return data;
+    }
+  });
+
+  const { data: applications, isLoading: isLoadingApplications } = useQuery({
+    queryKey: ['opportunity-applications', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Opportunity ID is required');
+      const { data, error } = await fetchOpportunityApplications(id);
+      if (error) throw new Error(error);
+      return data || [];
+    }
+  });
+
+  const handleViewProfile = (profileId: string) => {
+    setSelectedProfileId(profileId);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedProfileId(null);
+  };
+
+  if (isLoadingOpportunity || isLoadingApplications) {
+    return (
+      <div className="flex-1 p-6 bg-gray-50 flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 p-6 bg-gray-50">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/dashboard/brand/manage-opportunities')}
+            className="mb-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to opportunities
+          </Button>
+        </div>
+
+        {opportunity && (
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold">{opportunity.title} - Applications</h1>
+            <p className="text-gray-600">{opportunity.description}</p>
+          </div>
+        )}
+
+        {applications && applications.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                <span>Run Club Applications ({applications.length})</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Run Club</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Applied On</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {applications.map((application: any) => (
+                    <TableRow key={application.id}>
+                      <TableCell className="font-medium">
+                        {application.profile?.club_name || 'Unnamed Run Club'}
+                      </TableCell>
+                      <TableCell>{application.profile?.location || 'Unknown'}</TableCell>
+                      <TableCell>
+                        <span className="capitalize px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                          {application.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>{new Date(application.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleViewProfile(application.user_id)}
+                        >
+                          <User className="h-4 w-4 mr-1" />
+                          View Profile
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>No Applications Yet</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">
+                There are no applications for this opportunity yet. Check back later.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {selectedProfileId && (
+          <RunClubProfileModal
+            profileId={selectedProfileId}
+            isOpen={!!selectedProfileId}
+            onClose={handleCloseModal}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default OpportunityApplicationsPage;

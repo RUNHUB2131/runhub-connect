@@ -26,6 +26,7 @@ import BrandProfilePage from "./pages/dashboard/brand/BrandProfilePage";
 import PostOpportunityPage from "./pages/dashboard/brand/PostOpportunityPage";
 import ManageOpportunitiesPage from "./pages/dashboard/brand/ManageOpportunitiesPage";
 import BrandMessagesPage from "./pages/dashboard/brand/BrandMessagesPage";
+import OpportunityApplicationsPage from "./pages/dashboard/brand/OpportunityApplicationsPage";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="profile" element={<BrandProfilePage />} />
               <Route path="post-opportunity" element={<PostOpportunityPage />} />
               <Route path="manage-opportunities" element={<ManageOpportunitiesPage />} />
+              <Route path="opportunity/:id/applications" element={<OpportunityApplicationsPage />} />
               <Route path="messages" element={<BrandMessagesPage />} />
             </Route>
             
