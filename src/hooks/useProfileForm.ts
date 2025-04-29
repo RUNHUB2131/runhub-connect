@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,6 +51,7 @@ export function useProfileForm(initialValues = defaultProfileValues) {
   const [selectedRunType, setSelectedRunType] = useState<string>("");
   const [selectedEventExp, setSelectedEventExp] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -62,6 +64,7 @@ export function useProfileForm(initialValues = defaultProfileValues) {
   useEffect(() => {
     if (user) {
       fetchProfileData(user.id);
+      setProfileId(user.id);
     }
   }, [user]);
 
@@ -227,6 +230,7 @@ export function useProfileForm(initialValues = defaultProfileValues) {
     isLoading,
     selectedRunType,
     selectedEventExp,
+    profileId,
     user,
     setSelectedRunType,
     setSelectedEventExp,
