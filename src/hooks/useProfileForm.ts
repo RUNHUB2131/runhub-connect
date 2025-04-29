@@ -94,7 +94,7 @@ export function useProfileForm(initialValues = defaultProfileValues) {
       const { error } = await supabase
         .from('runclub_profiles')
         .upsert({
-          id: user.id,
+          id: user.id, // This is essential for Row Level Security
           club_name: data.clubName,
           location: data.location,
           member_count: data.memberCount,
