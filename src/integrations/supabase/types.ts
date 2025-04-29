@@ -59,6 +59,57 @@ export type Database = {
           },
         ]
       }
+      opportunities: {
+        Row: {
+          brand_id: string
+          created_at: string
+          deadline: string
+          description: string
+          detailed_description: string | null
+          duration: string
+          id: string
+          is_active: boolean
+          is_new: boolean
+          requirements: string | null
+          reward: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          deadline: string
+          description: string
+          detailed_description?: string | null
+          duration: string
+          id?: string
+          is_active?: boolean
+          is_new?: boolean
+          requirements?: string | null
+          reward: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          deadline?: string
+          description?: string
+          detailed_description?: string | null
+          duration?: string
+          id?: string
+          is_active?: boolean
+          is_new?: boolean
+          requirements?: string | null
+          reward?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
