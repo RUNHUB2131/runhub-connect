@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { OpportunityFormValues } from "@/schemas/opportunityFormSchema";
 
@@ -204,8 +205,7 @@ export async function fetchOpportunityApplications(opportunityId: string) {
     const { data: applications, error: applicationsError } = await supabase
       .from("applications")
       .select(`
-        *,
-        runclub_profiles:user_id(*)
+        *
       `)
       .eq("opportunity_id", opportunityId);
     
@@ -213,12 +213,24 @@ export async function fetchOpportunityApplications(opportunityId: string) {
       throw new Error("Failed to fetch applications: " + applicationsError.message);
     }
     
-    // Process applications to move profile data to a cleaner structure
-    const processedApplications = applications.map(app => ({
-      ...app,
-      profile: app.runclub_profiles || null
+    // For each application, fetch the runclub profile
+    const processedApplications = await Promise.all(applications.map(async (app) => {
+      const { data: profile, error: profileError } = await supabase
+        .from("runclub_profiles")
+        .select("*")
+        .eq("id", app.user_id)
+        .single();
+        
+      if (profileError) {
+        console.warn("Error fetching profile for user", app.user_id, profileError);
+        return { ...app, profile: null };
+      }
+      
+      return { ...app, profile };
     }));
 
+    console.log("Processed applications with profiles:", processedApplications);
+    
     return { data: processedApplications, error: null };
   } catch (error: any) {
     console.error("Error fetching applications:", error);

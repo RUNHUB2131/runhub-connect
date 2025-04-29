@@ -125,20 +125,13 @@ const OpportunityApplicationsPage = () => {
     }
   };
 
-  // Debugging helper to safely get club name
+  // Safe accessor functions for profile data
   const getClubName = (application: any) => {
-    if (application?.profile?.club_name) {
-      return application.profile.club_name;
-    }
-    return 'Unnamed Run Club';
+    return application?.profile?.club_name || 'Unnamed Run Club';
   };
 
-  // Debugging helper to safely get location
   const getLocation = (application: any) => {
-    if (application?.profile?.location) {
-      return application.profile.location;
-    }
-    return 'Unknown';
+    return application?.profile?.location || 'Unknown';
   };
 
   if (isLoadingOpportunity || isLoadingApplications) {
