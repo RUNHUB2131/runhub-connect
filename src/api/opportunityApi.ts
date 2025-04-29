@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { OpportunityFormValues } from "@/schemas/opportunityFormSchema";
 
@@ -253,6 +254,34 @@ export async function fetchRunClubProfile(profileId: string) {
     return { data, error: null };
   } catch (error: any) {
     console.error("Error fetching run club profile:", error);
+    return { data: null, error: error.message };
+  }
+}
+
+export async function updateApplicationStatus(applicationId: string, status: string) {
+  try {
+    // Get the current user (brand)
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      throw new Error("Authentication error: " + (userError?.message || "User not found"));
+    }
+
+    // Update the application status
+    const { data, error } = await supabase
+      .from("applications")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", applicationId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error("Failed to update application status: " + error.message);
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error("Error updating application status:", error);
     return { data: null, error: error.message };
   }
 }

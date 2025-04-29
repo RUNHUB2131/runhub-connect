@@ -11,8 +11,9 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Users, MapPin, Globe, Instagram, Twitter, Facebook } from "lucide-react";
+import { Users, MapPin, Globe, Instagram, Twitter, Facebook, Calendar, Clock } from "lucide-react";
 import { fetchRunClubProfile } from '@/api/opportunityApi';
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface RunClubProfileModalProps {
   profileId: string;
@@ -35,6 +36,17 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
     enabled: !!profileId && isOpen
   });
   
+  // Helper function to get initials from club name
+  const getInitials = (name: string | undefined | null) => {
+    if (!name) return "RC";
+    return name
+      .split(' ')
+      .slice(0, 2)
+      .map(word => word[0])
+      .join('')
+      .toUpperCase();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -51,39 +63,107 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
           </div>
         ) : profile ? (
           <div className="space-y-6">
-            {/* Basic Info */}
-            <div>
-              <h3 className="text-lg font-semibold mb-2">{profile.club_name || 'Unnamed Run Club'}</h3>
-              <div className="flex items-center text-muted-foreground mb-2">
-                <MapPin className="h-4 w-4 mr-1" />
-                <span>{profile.location || 'No location specified'}</span>
-              </div>
-              <div className="flex items-center text-muted-foreground mb-2">
-                <Users className="h-4 w-4 mr-1" />
-                <span>{profile.member_count || '0'} members</span>
-              </div>
-              {profile.website && (
-                <div className="flex items-center text-muted-foreground mb-2">
-                  <Globe className="h-4 w-4 mr-1" />
-                  <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                    {profile.website}
-                  </a>
+            {/* Header with Avatar */}
+            <div className="flex items-start gap-4">
+              <Avatar className="h-16 w-16 text-lg">
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {getInitials(profile.club_name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold mb-1">{profile.club_name || 'Unnamed Run Club'}</h3>
+                <div className="flex items-center text-muted-foreground">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  <span>{profile.location || 'No location specified'}</span>
                 </div>
-              )}
+              </div>
             </div>
             
             <Separator />
             
+            {/* Key Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-sm font-medium mb-2">Club Information</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center text-muted-foreground">
+                    <Users className="h-4 w-4 mr-2" />
+                    <span>{profile.member_count || '0'} members</span>
+                  </div>
+                  {profile.website && (
+                    <div className="flex items-center text-muted-foreground">
+                      <Globe className="h-4 w-4 mr-2" />
+                      <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {profile.website}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {profile.community_data && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Community Demographics</h4>
+                  <div className="space-y-2">
+                    {profile.community_data.average_group_size && (
+                      <div className="flex items-center text-muted-foreground">
+                        <Users className="h-4 w-4 mr-2" />
+                        <span>Average group size: {profile.community_data.average_group_size}</span>
+                      </div>
+                    )}
+                    {profile.community_data.core_demographic && (
+                      <div className="flex items-center text-muted-foreground">
+                        <span>Core demographic: {profile.community_data.core_demographic}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            
             {/* Description */}
             {profile.description && (
-              <div>
-                <h4 className="text-sm font-medium mb-2">About</h4>
-                <p className="text-gray-700">{profile.description}</p>
-              </div>
+              <>
+                <Separator />
+                <div>
+                  <h4 className="text-sm font-medium mb-2">About</h4>
+                  <p className="text-gray-700">{profile.description}</p>
+                </div>
+              </>
+            )}
+            
+            {/* Run Types & Event Experience */}
+            {profile.community_data && (profile.community_data.run_types?.length > 0 || profile.community_data.event_experience?.length > 0) && (
+              <>
+                <Separator />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {profile.community_data.run_types && profile.community_data.run_types.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Run Types</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {profile.community_data.run_types.map((type: string, index: number) => (
+                          <Badge key={index} variant="secondary">{type}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {profile.community_data.event_experience && profile.community_data.event_experience.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Event Experience</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {profile.community_data.event_experience.map((exp: string, index: number) => (
+                          <Badge key={index} variant="secondary">{exp}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
             
             {/* Social Media */}
-            {profile.social_media && (
+            {profile.social_media && (profile.social_media.instagram?.handle || profile.social_media.twitter?.handle || profile.social_media.facebook?.page) && (
               <>
                 <Separator />
                 <div>
@@ -125,50 +205,6 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
                       </div>
                     )}
                   </div>
-                </div>
-              </>
-            )}
-            
-            {/* Community Data */}
-            {profile.community_data && (
-              <>
-                <Separator />
-                <div>
-                  <h4 className="text-sm font-medium mb-3">Community</h4>
-                  
-                  {profile.community_data.average_group_size && (
-                    <div className="mb-2">
-                      <span className="text-gray-600">Average Group Size:</span> {profile.community_data.average_group_size}
-                    </div>
-                  )}
-                  
-                  {profile.community_data.core_demographic && (
-                    <div className="mb-2">
-                      <span className="text-gray-600">Core Demographic:</span> {profile.community_data.core_demographic}
-                    </div>
-                  )}
-                  
-                  {profile.community_data.run_types && profile.community_data.run_types.length > 0 && (
-                    <div className="mb-2">
-                      <span className="text-gray-600 block mb-1">Run Types:</span>
-                      <div className="flex flex-wrap gap-2">
-                        {profile.community_data.run_types.map((type: string, index: number) => (
-                          <Badge key={index} variant="secondary">{type}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {profile.community_data.event_experience && profile.community_data.event_experience.length > 0 && (
-                    <div>
-                      <span className="text-gray-600 block mb-1">Event Experience:</span>
-                      <div className="flex flex-wrap gap-2">
-                        {profile.community_data.event_experience.map((exp: string, index: number) => (
-                          <Badge key={index} variant="secondary">{exp}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </>
             )}
