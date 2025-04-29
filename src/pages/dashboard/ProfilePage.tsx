@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
@@ -9,7 +8,8 @@ import { User, Users, Instagram, Twitter, Facebook, Link, ExternalLink, Plus, X,
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { RUN_TYPES, EVENT_EXPERIENCES, DEMOGRAPHIC_OPTIONS } from "@/lib/constants";
-import { useProfileForm, ProfileFormValues } from "@/hooks/useProfileForm";
+import { useProfileForm } from "@/hooks/useProfileForm";
+import { ProfileFormValues } from "@/schemas/profileFormSchema";
 import { useToast } from "@/hooks/use-toast";
 
 const ProfilePage: React.FC = () => {
@@ -21,6 +21,7 @@ const ProfilePage: React.FC = () => {
     selectedRunType,
     selectedEventExp,
     profileId,
+    user,
     setSelectedRunType,
     setSelectedEventExp,
     toggleEditSection,
@@ -667,7 +668,12 @@ const ProfilePage: React.FC = () => {
                           variant="outline" 
                           size="sm" 
                           className="flex items-center gap-1" 
-                          onClick={addRunType}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (selectedRunType) {
+                              addRunType(selectedRunType);
+                            }
+                          }}
                           type="button"
                           disabled={!selectedRunType}
                         >
@@ -710,7 +716,12 @@ const ProfilePage: React.FC = () => {
                           variant="outline" 
                           size="sm" 
                           className="flex items-center gap-1" 
-                          onClick={addEventExperience}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (selectedEventExp) {
+                              addEventExperience(selectedEventExp);
+                            }
+                          }}
                           type="button"
                           disabled={!selectedEventExp}
                         >

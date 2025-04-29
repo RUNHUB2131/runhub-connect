@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +11,9 @@ import {
   type ProfileFormValues, 
   defaultProfileValues 
 } from "@/schemas/profileFormSchema";
+
+// Re-export ProfileFormValues for components that import from this file
+export type { ProfileFormValues };
 
 export function useProfileForm(initialValues = defaultProfileValues) {
   const [isEditing, setIsEditing] = useState<string | null>(null);
