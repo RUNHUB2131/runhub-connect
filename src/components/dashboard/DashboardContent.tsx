@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 
-const Dashboard: React.FC = () => {
+const DashboardContent: React.FC = () => {
   const navigate = useNavigate();
   
   return (
@@ -59,4 +59,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+export default DashboardContent;

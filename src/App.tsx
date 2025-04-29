@@ -10,6 +10,13 @@ import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import UserTypeSelection from "./pages/UserTypeSelection";
 
+// Dashboard pages
+import DashboardLayout from "./components/dashboard/DashboardLayout";
+import ProfilePage from "./pages/dashboard/ProfilePage";
+import OpportunitiesPage from "./pages/dashboard/OpportunitiesPage";
+import ApplicationsPage from "./pages/dashboard/ApplicationsPage";
+import MessagesPage from "./pages/dashboard/MessagesPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -22,7 +29,16 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/user-type" element={<UserTypeSelection />} />
           <Route path="/auth/:action" element={<AuthPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          
+          {/* Dashboard Routes */}
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="opportunities" element={<OpportunitiesPage />} />
+            <Route path="applications" element={<ApplicationsPage />} />
+            <Route path="messages" element={<MessagesPage />} />
+          </Route>
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
