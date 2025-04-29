@@ -1,10 +1,12 @@
 
 import React from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import AuthForm from '@/components/AuthForm';
 
 const AuthPage: React.FC = () => {
   const { action } = useParams<{ action: string }>();
+  const [searchParams] = useSearchParams();
+  const userType = searchParams.get('type') || 'runclub';
   const isLogin = action === 'login';
   
   return (
@@ -17,13 +19,13 @@ const AuthPage: React.FC = () => {
             </div>
             <span className="font-bold text-lg text-navy-800">RunConnect</span>
           </Link>
-          <Link to="/" className="text-navy-700 hover:text-orange-500">
-            Back to Home
+          <Link to="/user-type" className="text-navy-700 hover:text-orange-500">
+            Back to User Type Selection
           </Link>
         </div>
         
         <div className="flex-1 flex items-center justify-center py-12">
-          <AuthForm defaultTab={isLogin ? 'login' : 'register'} />
+          <AuthForm action={isLogin ? 'login' : 'register'} userType={userType} />
         </div>
       </div>
     </div>
