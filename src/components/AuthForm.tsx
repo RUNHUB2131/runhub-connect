@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -152,9 +152,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ action, userType }) => {
           <div className="text-center mt-4">
             <p className="text-navy-600">
               Don't have an account?{' '}
-              <a href={`/auth/register?type=${userType}`} className="text-orange-500 hover:text-orange-700">
+              <Link to="/user-type" className="text-orange-500 hover:text-orange-700">
                 Sign up
-              </a>
+              </Link>
             </p>
           </div>
         </form>
@@ -241,9 +241,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ action, userType }) => {
           <div className="text-center mt-4">
             <p className="text-navy-600">
               Already have an account?{' '}
-              <a href={`/auth/login?type=${userType}`} className="text-orange-500 hover:text-orange-700">
+              <Link to="/auth/login" className="text-orange-500 hover:text-orange-700">
                 Sign in
-              </a>
+              </Link>
             </p>
           </div>
         </form>

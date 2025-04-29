@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams, Navigate } from 'react-router-dom';
 import AuthForm from '@/components/AuthForm';
 
 const AuthPage: React.FC = () => {
@@ -8,6 +8,11 @@ const AuthPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const userType = searchParams.get('type') || 'runclub';
   const isLogin = action === 'login';
+  
+  // If action is not valid, redirect to login
+  if (action !== 'login' && action !== 'register') {
+    return <Navigate to="/auth/login" />;
+  }
   
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-navy-50 to-orange-50">
@@ -19,9 +24,11 @@ const AuthPage: React.FC = () => {
             </div>
             <span className="font-bold text-lg text-navy-800">RunConnect</span>
           </Link>
-          <Link to="/user-type" className="text-navy-700 hover:text-orange-500">
-            Back to User Type Selection
-          </Link>
+          {!isLogin && (
+            <Link to="/user-type" className="text-navy-700 hover:text-orange-500">
+              Back to User Type Selection
+            </Link>
+          )}
         </div>
         
         <div className="flex-1 flex items-center justify-center py-12">

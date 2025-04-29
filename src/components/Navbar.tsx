@@ -39,7 +39,7 @@ const Navbar: React.FC = () => {
         </nav>
         
         <div className="hidden md:flex items-center gap-4">
-          <Link to="/user-type">
+          <Link to="/auth/login">
             <Button variant="outline">Log in</Button>
           </Link>
           <Link to="/user-type">
@@ -69,7 +69,7 @@ const Navbar: React.FC = () => {
               About
             </Link>
             <div className="flex flex-col gap-2 mt-4 px-4">
-              <Link to="/user-type" onClick={toggleMenu}>
+              <Link to="/auth/login" onClick={toggleMenu}>
                 <Button variant="outline" className="w-full">Log in</Button>
               </Link>
               <Link to="/user-type" onClick={toggleMenu}>
