@@ -6,14 +6,15 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, CalendarDays, Clock, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { applyForOpportunity, fetchOpportunityById } from "@/api/opportunityApi";
 
 const OpportunityDetailPage: React.FC = () => {
   const { id } = useParams<{id: string}>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [applied, setApplied] = useState<boolean>(false);
+  const [isApplying, setIsApplying] = useState<boolean>(false);
+  const queryClient = useQueryClient();
 
   // Fetch opportunity details
   const { data: opportunity, isLoading, error } = useQuery({
@@ -21,59 +22,100 @@ const OpportunityDetailPage: React.FC = () => {
     queryFn: async () => {
       if (!id) throw new Error('No opportunity ID provided');
       
-      const { data, error } = await supabase
-        .from("opportunities")
-        .select("*")
-        .eq("id", id)
-        .single();
+      const { data, error } = await fetchOpportunityById(id);
       
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(error);
       if (!data) throw new Error('Opportunity not found');
       
       return data;
     },
   });
 
-  // Check if already applied from localStorage
-  React.useEffect(() => {
-    if (!id) return;
-    
-    const appliedOpportunities = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
-    const hasApplied = appliedOpportunities.some((appId: string) => appId === id);
-    setApplied(hasApplied);
-  }, [id]);
+  // Check if already applied
+  const { data: applicationStatus } = useQuery({
+    queryKey: ['application-status', id],
+    queryFn: async () => {
+      if (!id) return { applied: false };
+      
+      // Here we check if the user has already applied by looking at the applications in the cache
+      const applications = queryClient.getQueryData(['applications']) as any[];
+      if (applications) {
+        const hasApplied = applications.some(app => app.opportunity_id === id);
+        return { applied: hasApplied };
+      }
+      
+      // If no cached data, fallback to localStorage check
+      const appliedOpportunities = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
+      const hasApplied = appliedOpportunities.includes(id);
+      return { applied: hasApplied };
+    },
+    initialData: { applied: false }
+  });
 
-  const handleApply = () => {
+  const handleApply = async () => {
     if (!opportunity || !id) return;
     
-    // In a real app, this would send data to an API
-    const appliedOpportunities = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
-    if (!appliedOpportunities.includes(id)) {
-      appliedOpportunities.push(id);
-      localStorage.setItem('appliedOpportunities', JSON.stringify(appliedOpportunities));
-      setApplied(true);
+    setIsApplying(true);
+    
+    try {
+      const { data, error } = await applyForOpportunity(id);
+      
+      if (error) {
+        toast({
+          title: "Application Failed",
+          description: error,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Update localStorage for fallback
+      const appliedOpportunities = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
+      if (!appliedOpportunities.includes(id)) {
+        appliedOpportunities.push(id);
+        localStorage.setItem('appliedOpportunities', JSON.stringify(appliedOpportunities));
+      }
+      
+      // Invalidate applications query to force refetch
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
       
       toast({
         title: "Application Submitted",
         description: `You've successfully applied to "${opportunity.title}"`,
       });
+      
+      // Navigate to applications page
+      navigate("/dashboard/applications");
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "An error occurred while submitting your application",
+        variant: "destructive",
+      });
+    } finally {
+      setIsApplying(false);
     }
   };
 
   const handleRetractApplication = () => {
     if (!id) return;
     
-    // Remove from localStorage
+    // Remove from localStorage fallback
     const appliedOpportunities = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
     const updatedAppliedIds = appliedOpportunities.filter((appId: string) => appId !== id);
     localStorage.setItem('appliedOpportunities', JSON.stringify(updatedAppliedIds));
-    setApplied(false);
     
     // Show success toast
     toast({
       title: "Application Retracted",
       description: "Your application has been successfully retracted",
     });
+    
+    // Force refetch of applications data
+    queryClient.invalidateQueries({ queryKey: ['applications'] });
+    
+    // Navigate to applications page
+    navigate("/dashboard/applications");
   };
   
   if (isLoading) {
@@ -140,7 +182,7 @@ const OpportunityDetailPage: React.FC = () => {
                 <Users className="h-5 w-5 mr-2 text-gray-600" />
                 <div>
                   <div className="text-sm text-gray-600">Requirements</div>
-                  <div className="font-medium truncate">Club requirements</div>
+                  <div className="font-medium truncate">{opportunity.requirements || 'None specified'}</div>
                 </div>
               </div>
             </div>
@@ -167,7 +209,7 @@ const OpportunityDetailPage: React.FC = () => {
           <div className="fixed bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200 md:relative md:bg-transparent md:border-0 md:p-0 md:mt-10">
             <div className="flex items-center justify-between max-w-4xl mx-auto">
               <div className="text-2xl font-bold text-orange-500">{opportunity.reward}</div>
-              {applied ? (
+              {applicationStatus.applied ? (
                 <Button 
                   className="bg-red-500 hover:bg-red-600 text-white px-8 py-2"
                   onClick={handleRetractApplication}
@@ -178,8 +220,9 @@ const OpportunityDetailPage: React.FC = () => {
                 <Button 
                   className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2"
                   onClick={handleApply}
+                  disabled={isApplying}
                 >
-                  Apply
+                  {isApplying ? 'Applying...' : 'Apply'}
                 </Button>
               )}
             </div>
