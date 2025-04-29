@@ -52,7 +52,8 @@ const DashboardSidebar: React.FC = () => {
               <SidebarMenuItem key={item.path}>
                 <SidebarMenuButton 
                   asChild
-                  isActive={currentPath === item.path}
+                  isActive={currentPath === item.path || 
+                           (item.path === "/dashboard/opportunities" && currentPath === "/dashboard")}
                   tooltip={item.title}
                   aria-disabled={item.disabled}
                   className={item.disabled ? "opacity-50 pointer-events-none" : ""}

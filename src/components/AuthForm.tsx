@@ -56,7 +56,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ action, userType }) => {
       if (userTypeFromLogin === 'brand') {
         navigate('/dashboard/brand');
       } else {
-        navigate('/dashboard');
+        navigate('/dashboard/opportunities');
       }
     } catch (error) {
       toast({
@@ -101,7 +101,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ action, userType }) => {
       if (userType === 'brand') {
         navigate('/dashboard/brand');
       } else {
-        navigate('/dashboard');
+        navigate('/dashboard/opportunities');
       }
     } catch (error) {
       toast({
