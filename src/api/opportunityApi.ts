@@ -200,21 +200,38 @@ export async function fetchOpportunityApplications(opportunityId: string) {
       throw new Error("Authentication error: " + (userError?.message || "User not found"));
     }
 
-    // Fetch applications for this specific opportunity
-    // Also join with runclub_profiles to get applicant details
-    const { data, error } = await supabase
+    // First get the applications for this opportunity
+    const { data: applications, error: applicationsError } = await supabase
       .from("applications")
-      .select(`
-        *,
-        profile:runclub_profiles(*)
-      `)
+      .select("*")
       .eq("opportunity_id", opportunityId);
-
-    if (error) {
-      throw new Error("Failed to fetch applications: " + error.message);
+    
+    if (applicationsError) {
+      throw new Error("Failed to fetch applications: " + applicationsError.message);
     }
+    
+    // For each application, fetch the user's profile
+    const applicationsWithProfiles = await Promise.all(
+      (applications || []).map(async (application) => {
+        // Get the runclub profile for this user
+        const { data: profile, error: profileError } = await supabase
+          .from("runclub_profiles")
+          .select("*")
+          .eq("id", application.user_id)
+          .single();
+          
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.warn("Error fetching profile for user:", application.user_id, profileError);
+        }
+        
+        return {
+          ...application,
+          profile: profile || null
+        };
+      })
+    );
 
-    return { data, error: null };
+    return { data: applicationsWithProfiles, error: null };
   } catch (error: any) {
     console.error("Error fetching applications:", error);
     return { data: null, error: error.message };
