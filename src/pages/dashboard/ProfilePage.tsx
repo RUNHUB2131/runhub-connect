@@ -1,23 +1,26 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Users, Instagram, Twitter, Facebook, Link, ExternalLink, Plus, X } from "lucide-react";
+import { User, Users, Instagram, Twitter, Facebook, Link, ExternalLink, Plus, X, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { RUN_TYPES, EVENT_EXPERIENCES, DEMOGRAPHIC_OPTIONS } from "@/lib/constants";
 import { useProfileForm, ProfileFormValues } from "@/hooks/useProfileForm";
+import { useToast } from "@/hooks/use-toast";
 
 const ProfilePage: React.FC = () => {
+  const { toast } = useToast();
   const {
     form,
     isEditing,
+    isLoading,
     selectedRunType,
     selectedEventExp,
     profileId,
-    setProfileId,
     setSelectedRunType,
     setSelectedEventExp,
     toggleEditSection,
@@ -32,11 +35,19 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     // Fetch the current user's ID
     const fetchUserId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setProfileId(user.id);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session && session.user) {
+        console.log("Found authenticated user:", session.user.id);
         // Fetch user's profile data
-        await fetchProfileData(user.id);
+        await fetchProfileData(session.user.id);
+      } else {
+        console.log("No authenticated session found");
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to view and edit your profile.",
+          variant: "destructive"
+        });
       }
     };
 
@@ -52,6 +63,8 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (!profileId) return;
 
+    console.log("Setting up real-time subscription for profile:", profileId);
+    
     // Subscribe to changes in the runclub_profiles table for this specific profile
     const channel = supabase
       .channel('schema-db-changes')
@@ -170,8 +183,17 @@ const ProfilePage: React.FC = () => {
                 </div>
                 {isEditing === "basic" ? (
                   <div className="space-x-2">
-                    <Button variant="ghost" onClick={() => toggleEditSection(null)}>Cancel</Button>
-                    <Button type="submit">Save</Button>
+                    <Button variant="ghost" type="button" onClick={() => toggleEditSection(null)}>Cancel</Button>
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save"
+                      )}
+                    </Button>
                   </div>
                 ) : (
                   <Button variant="outline" onClick={() => toggleEditSection("basic")}>Edit</Button>
@@ -322,8 +344,17 @@ const ProfilePage: React.FC = () => {
                 </div>
                 {isEditing === "social" ? (
                   <div className="space-x-2">
-                    <Button variant="ghost" onClick={() => toggleEditSection(null)}>Cancel</Button>
-                    <Button type="submit">Save</Button>
+                    <Button variant="ghost" type="button" onClick={() => toggleEditSection(null)}>Cancel</Button>
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save"
+                      )}
+                    </Button>
                   </div>
                 ) : (
                   <Button variant="outline" onClick={() => toggleEditSection("social")}>Edit</Button>
@@ -535,8 +566,17 @@ const ProfilePage: React.FC = () => {
                 </div>
                 {isEditing === "community" ? (
                   <div className="space-x-2">
-                    <Button variant="ghost" onClick={() => toggleEditSection(null)}>Cancel</Button>
-                    <Button type="submit">Save</Button>
+                    <Button variant="ghost" type="button" onClick={() => toggleEditSection(null)}>Cancel</Button>
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save"
+                      )}
+                    </Button>
                   </div>
                 ) : (
                   <Button variant="outline" onClick={() => toggleEditSection("community")}>Edit</Button>
