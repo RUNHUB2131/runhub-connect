@@ -2,14 +2,17 @@
 import { Outlet } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 import ProtectedRoute from "../ProtectedRoute";
+import { SidebarProvider } from "../ui/sidebar";
 
 const DashboardLayout = () => {
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen">
-        <DashboardSidebar />
-        <Outlet />
-      </div>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <DashboardSidebar />
+          <Outlet />
+        </div>
+      </SidebarProvider>
     </ProtectedRoute>
   );
 };
