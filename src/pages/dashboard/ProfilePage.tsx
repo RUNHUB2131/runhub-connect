@@ -1,78 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useToast } from "@/hooks/use-toast";
 import { User, Users, Instagram, Twitter, Facebook, Link, ExternalLink, Plus, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-
-// Define available options for run types and event experience
-const RUN_TYPES = ["Road", "Trail", "Track", "Urban", "Cross Country", "Beach", "Mountain"];
-const EVENT_EXPERIENCES = ["Races", "Charity Runs", "Sponsored Events", "Community Meetups", 
-                         "Virtual Runs", "Marathon Training", "Workshops", "Brand Collaborations"];
-
-// Define the form schema with validation rules
-const profileFormSchema = z.object({
-  clubName: z.string().min(2, "Club name must be at least 2 characters"),
-  location: z.string().min(2, "Location must be at least 2 characters"),
-  memberCount: z.coerce.number().int().nonnegative("Member count must be a positive number"),
-  description: z.string().max(500, "Description cannot exceed 500 characters"),
-  website: z.string().url("Please enter a valid URL").or(z.string().length(0)),
-  instagramHandle: z.string().optional(),
-  instagramFollowers: z.coerce.number().int().nonnegative("Follower count must be a positive number"),
-  twitterHandle: z.string().optional(),
-  twitterFollowers: z.coerce.number().int().nonnegative("Follower count must be a positive number"),
-  facebookPage: z.string().optional(),
-  facebookFollowers: z.coerce.number().int().nonnegative("Follower count must be a positive number"),
-  averageGroupSize: z.coerce.number().int().nonnegative("Group size must be a positive number"),
-  coreDemographic: z.string(),
-  runTypes: z.array(z.string()),
-  eventExperience: z.array(z.string())
-});
-
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
+import { RUN_TYPES, EVENT_EXPERIENCES, DEMOGRAPHIC_OPTIONS } from "@/lib/constants";
+import { useProfileForm, ProfileFormValues } from "@/hooks/useProfileForm";
 
 const ProfilePage: React.FC = () => {
-  const [isEditing, setIsEditing] = useState<string | null>(null);
-  const [selectedRunType, setSelectedRunType] = useState<string>("");
-  const [selectedEventExp, setSelectedEventExp] = useState<string>("");
-  const { toast } = useToast();
-  const [profileId, setProfileId] = useState<string | null>(null);
-
-  // Set up form with default values
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      clubName: "Sunrise Runners",
-      location: "San Francisco, CA",
-      memberCount: 45,
-      description: "A diverse run club meeting twice weekly for morning and evening runs, welcoming runners of all levels. We organize monthly events and participate in local races.",
-      website: "https://sunriserunners.com",
-      instagramHandle: "sunrise_runners",
-      instagramFollowers: 1200,
-      twitterHandle: "sunriserunSF",
-      twitterFollowers: 750,
-      facebookPage: "Sunrise Runners Club",
-      facebookFollowers: 980,
-      averageGroupSize: 25,
-      coreDemographic: "25-34",
-      runTypes: ["Road", "Trail", "Track", "Urban"],
-      eventExperience: ["Races", "Charity Runs", "Sponsored Events", "Community Meetups"]
-    }
-  });
+  const {
+    form,
+    isEditing,
+    selectedRunType,
+    selectedEventExp,
+    profileId,
+    setProfileId,
+    setSelectedRunType,
+    setSelectedEventExp,
+    toggleEditSection,
+    onSubmit,
+    addRunType,
+    removeRunType,
+    addEventExperience,
+    removeEventExperience
+  } = useProfileForm();
 
   // Set up real-time subscription to profile updates
   useEffect(() => {
@@ -114,12 +68,6 @@ const ProfilePage: React.FC = () => {
           if (payload.new) {
             // Update the form with the new data
             updateFormWithProfileData(payload.new);
-            
-            // Show toast notification
-            toast({
-              title: "Profile updated",
-              description: "Your profile has been updated in real-time.",
-            });
           }
         }
       )
@@ -129,7 +77,7 @@ const ProfilePage: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profileId, toast]);
+  }, [profileId]);
 
   // Fetch profile data from Supabase
   const fetchProfileData = async (userId: string) => {
@@ -178,99 +126,6 @@ const ProfilePage: React.FC = () => {
         eventExperience: form.getValues("eventExperience")
       });
     }
-  };
-
-  // Handle section editing toggle
-  const toggleEditSection = (section: string | null) => {
-    setIsEditing(section);
-  };
-
-  // Handle form submission
-  const onSubmit = async (data: ProfileFormValues) => {
-    console.log("Form data submitted:", data);
-    
-    if (!profileId) {
-      toast({
-        title: "Error",
-        description: "User not authenticated. Please log in to update your profile.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      // Update the profile in Supabase
-      const { error } = await supabase
-        .from('runclub_profiles')
-        .upsert({
-          id: profileId,
-          club_name: data.clubName,
-          location: data.location,
-          member_count: data.memberCount,
-          description: data.description,
-          website: data.website,
-          // Add other fields as needed
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('Error updating profile:', error);
-        toast({
-          title: "Error updating profile",
-          description: error.message,
-          variant: "destructive"
-        });
-        return;
-      }
-
-      toast({
-        title: "Profile updated",
-        description: "Your profile changes have been saved.",
-      });
-      
-      setIsEditing(null);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while updating your profile.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Add new run type tag
-  const addRunType = () => {
-    if (!selectedRunType) return;
-    
-    const currentRunTypes = form.getValues("runTypes");
-    if (!currentRunTypes.includes(selectedRunType)) {
-      form.setValue("runTypes", [...currentRunTypes, selectedRunType]);
-      setSelectedRunType("");
-    }
-  };
-
-  // Remove run type tag
-  const removeRunType = (type: string) => {
-    const currentRunTypes = form.getValues("runTypes");
-    form.setValue("runTypes", currentRunTypes.filter(t => t !== type));
-  };
-
-  // Add new event experience tag
-  const addEventExperience = () => {
-    if (!selectedEventExp) return;
-    
-    const currentEvents = form.getValues("eventExperience");
-    if (!currentEvents.includes(selectedEventExp)) {
-      form.setValue("eventExperience", [...currentEvents, selectedEventExp]);
-      setSelectedEventExp("");
-    }
-  };
-
-  // Remove event experience tag
-  const removeEventExperience = (event: string) => {
-    const currentEvents = form.getValues("eventExperience");
-    form.setValue("eventExperience", currentEvents.filter(e => e !== event));
   };
 
   // Format social media URL
@@ -720,17 +575,15 @@ const ProfilePage: React.FC = () => {
                               <Select 
                                 onValueChange={field.onChange} 
                                 defaultValue={field.value}
+                                value={field.value}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select age range" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="18-24">18-24 years</SelectItem>
-                                  <SelectItem value="25-34">25-34 years</SelectItem>
-                                  <SelectItem value="35-44">35-44 years</SelectItem>
-                                  <SelectItem value="45-54">45-54 years</SelectItem>
-                                  <SelectItem value="55+">55+ years</SelectItem>
-                                  <SelectItem value="Mixed">Mixed ages</SelectItem>
+                                  {DEMOGRAPHIC_OPTIONS.map(option => (
+                                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                             </FormControl>
@@ -743,7 +596,7 @@ const ProfilePage: React.FC = () => {
                     <div>
                       <h3 className="font-medium mb-2">Run Types</h3>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {form.getValues("runTypes").map((tag) => (
+                        {form.watch("runTypes").map((tag) => (
                           <div key={tag} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
                             {tag}
                             <button 
@@ -786,7 +639,7 @@ const ProfilePage: React.FC = () => {
                     <div>
                       <h3 className="font-medium mb-2">Event Experience</h3>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {form.getValues("eventExperience").map((tag) => (
+                        {form.watch("eventExperience").map((tag) => (
                           <div key={tag} className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
                             {tag}
                             <button 

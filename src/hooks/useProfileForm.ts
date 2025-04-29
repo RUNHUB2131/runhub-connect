@@ -114,20 +114,25 @@ export function useProfileForm(initialValues = defaultProfileValues) {
     }
   };
 
-  // Tag management methods
+  // Tag management methods with immediate updates
   const addRunType = () => {
     if (!selectedRunType) return;
     
     const currentRunTypes = form.getValues("runTypes");
     if (!currentRunTypes.includes(selectedRunType)) {
-      form.setValue("runTypes", [...currentRunTypes, selectedRunType]);
+      form.setValue("runTypes", [...currentRunTypes, selectedRunType], { shouldDirty: true });
       setSelectedRunType("");
     }
   };
 
   const removeRunType = (type: string) => {
     const currentRunTypes = form.getValues("runTypes");
-    form.setValue("runTypes", currentRunTypes.filter(t => t !== type));
+    // Immediately update the form value
+    form.setValue(
+      "runTypes", 
+      currentRunTypes.filter(t => t !== type),
+      { shouldDirty: true }
+    );
   };
 
   const addEventExperience = () => {
@@ -135,14 +140,19 @@ export function useProfileForm(initialValues = defaultProfileValues) {
     
     const currentEvents = form.getValues("eventExperience");
     if (!currentEvents.includes(selectedEventExp)) {
-      form.setValue("eventExperience", [...currentEvents, selectedEventExp]);
+      form.setValue("eventExperience", [...currentEvents, selectedEventExp], { shouldDirty: true });
       setSelectedEventExp("");
     }
   };
 
   const removeEventExperience = (event: string) => {
     const currentEvents = form.getValues("eventExperience");
-    form.setValue("eventExperience", currentEvents.filter(e => e !== event));
+    // Immediately update the form value
+    form.setValue(
+      "eventExperience", 
+      currentEvents.filter(e => e !== event),
+      { shouldDirty: true }
+    );
   };
 
   return {
