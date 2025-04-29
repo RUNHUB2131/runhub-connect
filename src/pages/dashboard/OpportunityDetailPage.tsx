@@ -1,92 +1,55 @@
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, CalendarDays, Clock, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-// Mock data - in a real app, this would come from an API or database
-const opportunities = [
-  {
-    id: 1,
-    type: "Sponsorship",
-    title: "Sports Drink Brand Partnership",
-    description: "Looking for running clubs to sponsor with our new electrolyte drink. We're seeking engaged running communities to partner with for our new product launch. Clubs will receive product samples for members and exclusive branding opportunities.",
-    reward: "$500",
-    deadline: "15 May",
-    duration: "3 months",
-    isNew: true,
-    brandName: "HydrateMax",
-    requirements: "Active club with at least 20 members, social media presence, willingness to share product feedback.",
-    detailedDescription: "Our new electrolyte formula is designed specifically for runners, with optimal mineral content and natural flavors. We want to partner with clubs that can provide genuine feedback and help us promote the product through authentic word-of-mouth marketing."
-  },
-  {
-    id: 2,
-    type: "Event",
-    title: "Community 5K Run",
-    description: "Partner with our athletic wear brand for a community race event. We'll provide branded gear and organization support for your club to host a successful community run.",
-    reward: "$1,200",
-    deadline: "21 May",
-    duration: "1 day event",
-    isNew: true,
-    brandName: "RunFit Apparel",
-    requirements: "Club must be able to help organize a local event, recruit at least 50 participants, and have experience with community races.",
-    detailedDescription: "This is a great opportunity to increase your club's visibility while receiving funding and support. We'll provide race bibs, finisher medals, and branded water stations. Your club will be prominently featured in all marketing materials."
-  },
-  {
-    id: 3,
-    type: "Product Testing",
-    title: "Test New Running Shoes",
-    description: "We need running clubs to test our latest trail running shoes and provide detailed feedback on performance, comfort, and durability.",
-    reward: "$300 + free shoes",
-    deadline: "30 May",
-    duration: "2 weeks",
-    isNew: false,
-    brandName: "TrailBlaze",
-    requirements: "Club members must collectively run at least 100 miles in the provided shoes and complete detailed feedback forms.",
-    detailedDescription: "Your members will receive our unreleased trail running shoes designed for varied terrain. We're particularly interested in feedback on the new grip pattern and cushioning system. Each participant will get to keep their pair after providing feedback."
-  },
-  {
-    id: 4,
-    type: "Affiliate",
-    title: "Running Gear Discount Program",
-    description: "Offer your members exclusive discounts on our products with your club earning commission on all sales.",
-    reward: "20% commission",
-    deadline: "Open",
-    duration: "Ongoing",
-    isNew: false,
-    brandName: "RunGear Pro",
-    requirements: "Clubs must have a website or social media platform to share unique discount codes with members.",
-    detailedDescription: "This long-term partnership opportunity allows your club to earn ongoing revenue while providing value to your members. Your club will receive a unique discount code to share, and you'll earn 20% commission on all sales made using the code."
-  }
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const OpportunityDetailPage: React.FC = () => {
   const { id } = useParams<{id: string}>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [opportunity, setOpportunity] = useState<any>(null);
   const [applied, setApplied] = useState<boolean>(false);
 
-  useEffect(() => {
-    // In a real app, fetch data from an API
-    const opportunityId = parseInt(id || '0');
-    const foundOpportunity = opportunities.find(opp => opp.id === opportunityId);
-    setOpportunity(foundOpportunity);
+  // Fetch opportunity details
+  const { data: opportunity, isLoading, error } = useQuery({
+    queryKey: ['opportunity', id],
+    queryFn: async () => {
+      if (!id) throw new Error('No opportunity ID provided');
+      
+      const { data, error } = await supabase
+        .from("opportunities")
+        .select("*")
+        .eq("id", id)
+        .single();
+      
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error('Opportunity not found');
+      
+      return data;
+    },
+  });
+
+  // Check if already applied from localStorage
+  React.useEffect(() => {
+    if (!id) return;
     
-    // Check if already applied from localStorage
     const appliedOpportunities = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
-    const hasApplied = appliedOpportunities.some((appId: number) => appId === opportunityId);
+    const hasApplied = appliedOpportunities.some((appId: string) => appId === id);
     setApplied(hasApplied);
   }, [id]);
 
   const handleApply = () => {
+    if (!opportunity || !id) return;
+    
     // In a real app, this would send data to an API
     const appliedOpportunities = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
-    if (!appliedOpportunities.includes(opportunity.id)) {
-      appliedOpportunities.push(opportunity.id);
+    if (!appliedOpportunities.includes(id)) {
+      appliedOpportunities.push(id);
       localStorage.setItem('appliedOpportunities', JSON.stringify(appliedOpportunities));
       setApplied(true);
       
@@ -98,9 +61,11 @@ const OpportunityDetailPage: React.FC = () => {
   };
 
   const handleRetractApplication = () => {
+    if (!id) return;
+    
     // Remove from localStorage
     const appliedOpportunities = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
-    const updatedAppliedIds = appliedOpportunities.filter((appId: number) => appId !== opportunity.id);
+    const updatedAppliedIds = appliedOpportunities.filter((appId: string) => appId !== id);
     localStorage.setItem('appliedOpportunities', JSON.stringify(updatedAppliedIds));
     setApplied(false);
     
@@ -111,7 +76,15 @@ const OpportunityDetailPage: React.FC = () => {
     });
   };
   
-  if (!opportunity) {
+  if (isLoading) {
+    return (
+      <div className="flex-1 p-6 bg-gray-50 flex items-center justify-center">
+        <p>Loading opportunity details...</p>
+      </div>
+    );
+  }
+
+  if (error || !opportunity) {
     return (
       <div className="flex-1 p-6 bg-gray-50 flex items-center justify-center">
         <p>Opportunity not found</p>
@@ -141,7 +114,7 @@ const OpportunityDetailPage: React.FC = () => {
                   {opportunity.type}
                 </Badge>
                 <h1 className="text-3xl font-bold">{opportunity.title}</h1>
-                <p className="text-gray-700 mt-2">By {opportunity.brandName}</p>
+                <p className="text-gray-700 mt-2">By Brand</p>
               </div>
               <div className="text-3xl font-bold text-orange-500">{opportunity.reward}</div>
             </div>
@@ -178,16 +151,18 @@ const OpportunityDetailPage: React.FC = () => {
           <section>
             <h2 className="text-xl font-semibold mb-3">About this opportunity</h2>
             <p className="text-gray-700">
-              {opportunity.detailedDescription}
+              {opportunity.detailed_description || opportunity.description}
             </p>
           </section>
           
-          <section>
-            <h2 className="text-xl font-semibold mb-3">Requirements</h2>
-            <p className="text-gray-700">
-              {opportunity.requirements}
-            </p>
-          </section>
+          {opportunity.requirements && (
+            <section>
+              <h2 className="text-xl font-semibold mb-3">Requirements</h2>
+              <p className="text-gray-700">
+                {opportunity.requirements}
+              </p>
+            </section>
+          )}
           
           <div className="fixed bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200 md:relative md:bg-transparent md:border-0 md:p-0 md:mt-10">
             <div className="flex items-center justify-between max-w-4xl mx-auto">

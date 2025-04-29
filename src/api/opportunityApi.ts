@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { OpportunityFormValues } from "@/schemas/opportunityFormSchema";
-import { useToast } from "@/hooks/use-toast";
 
 export async function createOpportunity(opportunityData: OpportunityFormValues) {
   try {
@@ -83,6 +82,25 @@ export async function fetchAllOpportunities() {
     return { data, error: null };
   } catch (error: any) {
     console.error("Error fetching opportunities:", error);
+    return { data: null, error: error.message };
+  }
+}
+
+export async function fetchOpportunityById(id: string) {
+  try {
+    const { data, error } = await supabase
+      .from("opportunities")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      throw new Error("Failed to fetch opportunity: " + error.message);
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error("Error fetching opportunity:", error);
     return { data: null, error: error.message };
   }
 }
