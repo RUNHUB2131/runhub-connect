@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Loader2 } from 'lucide-react';
@@ -11,6 +11,36 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
+
+  // Ensure user type is checked
+  useEffect(() => {
+    const checkUserType = async () => {
+      if (user && !localStorage.getItem('userType')) {
+        // If userType isn't in localStorage, check brand_profiles
+        try {
+          const { data: brandProfile } = await supabase
+            .from('brand_profiles')
+            .select('id')
+            .eq('id', user.id)
+            .maybeSingle();
+            
+          if (brandProfile) {
+            localStorage.setItem('userType', 'brand');
+          } else {
+            localStorage.setItem('userType', 'runclub');
+          }
+        } catch (error) {
+          console.error('Error checking user type:', error);
+          // Default to runclub if check fails
+          localStorage.setItem('userType', 'runclub');
+        }
+      }
+    };
+    
+    if (user) {
+      checkUserType();
+    }
+  }, [user]);
 
   if (loading) {
     return (

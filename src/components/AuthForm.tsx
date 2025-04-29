@@ -52,14 +52,42 @@ const AuthForm: React.FC<AuthFormProps> = ({ action, userType }) => {
         variant: "default",
       });
       
-      // Store the user type in local storage for routing purposes
-      if (userType) {
+      // Get the user's metadata to determine their type
+      const { user } = data;
+      const userMetadata = user?.user_metadata;
+      const userTypeFromMetadata = userMetadata?.user_type || '';
+      
+      console.log("User metadata:", userMetadata);
+      console.log("User type from metadata:", userTypeFromMetadata);
+      
+      // Store the user type in localStorage
+      if (userTypeFromMetadata) {
+        localStorage.setItem('userType', userTypeFromMetadata);
+      } else if (userType) {
         localStorage.setItem('userType', userType);
       }
       
+      // If we still don't have a userType in localStorage, check profiles table
+      const storedUserType = localStorage.getItem('userType');
+      if (!storedUserType) {
+        // Check if user has a brand_profiles entry
+        const { data: brandProfile } = await supabase
+          .from('brand_profiles')
+          .select('id')
+          .eq('id', user?.id)
+          .maybeSingle();
+          
+        if (brandProfile) {
+          localStorage.setItem('userType', 'brand');
+        } else {
+          // Default to runclub if no brand profile found
+          localStorage.setItem('userType', 'runclub');
+        }
+      }
+      
       // Redirect based on user type
-      const userTypeToUse = localStorage.getItem('userType') || 'runclub';
-      if (userTypeToUse === 'brand') {
+      const finalUserType = localStorage.getItem('userType') || 'runclub';
+      if (finalUserType === 'brand') {
         navigate('/dashboard/brand');
       } else {
         navigate('/dashboard/opportunities');
