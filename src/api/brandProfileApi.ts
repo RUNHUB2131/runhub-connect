@@ -51,6 +51,7 @@ export async function updateBrandProfileData(userId: string, data: BrandProfileF
     
     // Create a structured object that maps form fields to database columns
     const profileData = {
+      id: userId, // Explicitly include user ID for RLS policies
       company_name: data.companyName,
       location: data.location,
       industry: data.industry,
@@ -97,21 +98,16 @@ export async function updateBrandProfileData(userId: string, data: BrandProfileF
     } else {
       // Insert new profile
       console.log("Creating new brand profile...");
-      // For new profiles, we must include the ID
-      const newProfileData = {
-        id: userId,
-        ...profileData
-      };
-      
       result = await supabase
         .from('brand_profiles')
-        .insert([newProfileData]);
+        .insert([profileData]);
     }
 
     const { error } = result;
 
     if (error) {
       console.error('Error updating brand profile:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return { success: false, error };
     }
 

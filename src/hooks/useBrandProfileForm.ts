@@ -47,6 +47,7 @@ export function useBrandProfileForm(initialValues = defaultBrandProfileValues) {
 
   // Load profile data from the API
   const loadProfileData = useCallback(async (userId: string) => {
+    console.log("Loading profile data for user:", userId);
     setIsLoading(true);
     try {
       const data = await fetchBrandProfileData(userId);
@@ -137,6 +138,7 @@ export function useBrandProfileForm(initialValues = defaultBrandProfileValues) {
       }
 
       console.log("Updating brand profile for user:", user.id);
+      console.log("Update data:", data);
       
       const result = await updateBrandProfileData(user.id, data);
 
