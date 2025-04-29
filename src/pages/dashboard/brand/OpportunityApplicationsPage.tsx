@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -41,6 +41,11 @@ const OpportunityApplicationsPage = () => {
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [acceptingApplicationId, setAcceptingApplicationId] = useState<string | null>(null);
 
+  // Debug logging for component mount and ID
+  useEffect(() => {
+    console.log("OpportunityApplicationsPage mounted with ID:", id);
+  }, [id]);
+
   const { data: opportunity, isLoading: isLoadingOpportunity } = useQuery({
     queryKey: ['opportunity', id],
     queryFn: async () => {
@@ -51,7 +56,7 @@ const OpportunityApplicationsPage = () => {
     }
   });
 
-  const { data: applications, isLoading: isLoadingApplications } = useQuery({
+  const { data: applications, isLoading: isLoadingApplications, error: applicationsError } = useQuery({
     queryKey: ['opportunity-applications', id],
     queryFn: async () => {
       if (!id) throw new Error('Opportunity ID is required');
@@ -59,10 +64,20 @@ const OpportunityApplicationsPage = () => {
       if (error) throw new Error(error);
       console.log("Fetched applications data:", data);
       return data || [];
-    }
+    },
+    retry: 1, // Retry once if there's an error
   });
 
+  // Debug logging for applications data
+  useEffect(() => {
+    console.log("Applications data state:", applications);
+    if (applicationsError) {
+      console.error("Applications fetch error:", applicationsError);
+    }
+  }, [applications, applicationsError]);
+
   const handleViewProfile = (profileId: string) => {
+    console.log("Viewing profile:", profileId);
     setSelectedProfileId(profileId);
   };
 
@@ -137,7 +152,34 @@ const OpportunityApplicationsPage = () => {
   if (isLoadingOpportunity || isLoadingApplications) {
     return (
       <div className="flex-1 p-6 bg-gray-50 flex items-center justify-center">
-        <p>Loading...</p>
+        <p>Loading applications...</p>
+      </div>
+    );
+  }
+
+  if (applicationsError) {
+    return (
+      <div className="flex-1 p-6 bg-gray-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate('/dashboard/brand/manage-opportunities')}
+              className="mb-4"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to opportunities
+            </Button>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Error Loading Applications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-red-500">There was a problem loading the applications. Please try again later.</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }

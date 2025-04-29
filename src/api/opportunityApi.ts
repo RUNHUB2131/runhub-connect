@@ -201,20 +201,29 @@ export async function fetchOpportunityApplications(opportunityId: string) {
       throw new Error("Authentication error: " + (userError?.message || "User not found"));
     }
 
+    console.log("Fetching applications for opportunity:", opportunityId);
+
     // First get the applications for this opportunity
     const { data: applications, error: applicationsError } = await supabase
       .from("applications")
-      .select(`
-        *
-      `)
+      .select("*")
       .eq("opportunity_id", opportunityId);
     
     if (applicationsError) {
       throw new Error("Failed to fetch applications: " + applicationsError.message);
     }
+
+    console.log("Raw applications data:", applications);
+    
+    if (!applications || applications.length === 0) {
+      console.log("No applications found for this opportunity");
+      return { data: [], error: null };
+    }
     
     // For each application, fetch the runclub profile
     const processedApplications = await Promise.all(applications.map(async (app) => {
+      console.log("Fetching profile for user ID:", app.user_id);
+      
       const { data: profile, error: profileError } = await supabase
         .from("runclub_profiles")
         .select("*")
@@ -226,6 +235,7 @@ export async function fetchOpportunityApplications(opportunityId: string) {
         return { ...app, profile: null };
       }
       
+      console.log("Found profile for user:", app.user_id, profile);
       return { ...app, profile };
     }));
 
