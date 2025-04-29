@@ -203,7 +203,7 @@ export async function fetchOpportunityApplications(opportunityId: string) {
 
     console.log("Fetching applications for opportunity:", opportunityId);
 
-    // First get the applications for this opportunity - without trying to join with profiles
+    // First fetch all applications for this opportunity
     const { data: applications, error: applicationsError } = await supabase
       .from("applications")
       .select("*")
@@ -220,28 +220,31 @@ export async function fetchOpportunityApplications(opportunityId: string) {
       console.log("No applications found for this opportunity");
       return { data: [], error: null };
     }
-    
-    // Process each application separately to get the profile data
+
+    // Process each application separately to get the profile data manually
     const processedApplications = [];
     
     for (const app of applications) {
-      console.log("Processing application for user ID:", app.user_id);
-      
       try {
-        // Get the profile for this application's user_id
+        console.log(`Processing application (ID: ${app.id}, User ID: ${app.user_id})`);
+        
+        // Fetch the runclub profile separately using the user_id
         const { data: profile, error: profileError } = await supabase
           .from("runclub_profiles")
           .select("*")
           .eq("id", app.user_id)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single to avoid errors if no profile exists
           
         if (profileError) {
-          console.warn("Error fetching profile for user", app.user_id, profileError);
+          console.error("Error fetching profile:", profileError);
           // Add the application even if we couldn't find the profile
           processedApplications.push({ ...app, profile: null });
-        } else {
-          console.log("Found profile for user:", app.user_id, profile);
+        } else if (profile) {
+          console.log("Found profile:", profile);
           processedApplications.push({ ...app, profile });
+        } else {
+          console.log("No profile found for user ID:", app.user_id);
+          processedApplications.push({ ...app, profile: null });
         }
       } catch (err) {
         console.error("Error processing application:", err);
@@ -250,7 +253,7 @@ export async function fetchOpportunityApplications(opportunityId: string) {
       }
     }
 
-    console.log("Processed applications with profiles:", processedApplications);
+    console.log("Final processed applications:", processedApplications);
     
     return { data: processedApplications, error: null };
   } catch (error: any) {

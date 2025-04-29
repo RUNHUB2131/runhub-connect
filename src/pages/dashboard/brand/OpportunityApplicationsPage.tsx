@@ -11,8 +11,8 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Users, User, Check } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ArrowLeft, Users, User, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   fetchOpportunityById, 
@@ -40,6 +40,7 @@ const OpportunityApplicationsPage = () => {
   const queryClient = useQueryClient();
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [acceptingApplicationId, setAcceptingApplicationId] = useState<string | null>(null);
+  const [rejectingApplicationId, setRejectingApplicationId] = useState<string | null>(null);
 
   // Debug logging for component mount and ID
   useEffect(() => {
@@ -56,10 +57,16 @@ const OpportunityApplicationsPage = () => {
     }
   });
 
-  const { data: applications, isLoading: isLoadingApplications, error: applicationsError, refetch } = useQuery({
+  const { 
+    data: applications, 
+    isLoading: isLoadingApplications, 
+    error: applicationsError, 
+    refetch 
+  } = useQuery({
     queryKey: ['opportunity-applications', id],
     queryFn: async () => {
       if (!id) throw new Error('Opportunity ID is required');
+      console.log("Fetching applications for opportunity ID:", id);
       const { data, error } = await fetchOpportunityApplications(id);
       if (error) throw new Error(error);
       console.log("Fetched applications data:", data);
@@ -127,6 +134,41 @@ const OpportunityApplicationsPage = () => {
     }
   };
 
+  const handleRejectApplication = async () => {
+    if (!rejectingApplicationId) return;
+    
+    try {
+      const { data, error } = await updateApplicationStatus(rejectingApplicationId, 'rejected');
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to reject the application. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Refresh the applications data
+      queryClient.invalidateQueries({ queryKey: ['opportunity-applications', id] });
+      
+      toast({
+        title: "Application Rejected",
+        description: "Application has been rejected.",
+        variant: "default",
+      });
+      
+      setRejectingApplicationId(null);
+    } catch (error) {
+      console.error("Error rejecting application:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'MMM d, yyyy');
@@ -184,6 +226,9 @@ const OpportunityApplicationsPage = () => {
             </CardHeader>
             <CardContent>
               <p className="text-red-500">There was a problem loading the applications. Please try again later.</p>
+              <Button onClick={() => refetch()} className="mt-4">
+                Try Again
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -256,31 +301,59 @@ const OpportunityApplicationsPage = () => {
                           </Button>
                           
                           {application.status === 'pending' && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="border-green-500 text-green-600 hover:bg-green-50"
-                                  onClick={() => setAcceptingApplicationId(application.id)}
-                                >
-                                  <Check className="h-4 w-4 mr-1" />
-                                  Accept
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Accept Application</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to accept this application from {getClubName(application)}?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={handleAcceptApplication}>Accept</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="border-green-500 text-green-600 hover:bg-green-50"
+                                    onClick={() => setAcceptingApplicationId(application.id)}
+                                  >
+                                    <Check className="h-4 w-4 mr-1" />
+                                    Accept
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Accept Application</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to accept this application from {getClubName(application)}?
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleAcceptApplication}>Accept</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                              
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="border-red-500 text-red-600 hover:bg-red-50"
+                                    onClick={() => setRejectingApplicationId(application.id)}
+                                  >
+                                    <X className="h-4 w-4 mr-1" />
+                                    Reject
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Reject Application</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to reject this application from {getClubName(application)}?
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleRejectApplication}>Reject</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
                           )}
                         </div>
                       </TableCell>
@@ -294,11 +367,17 @@ const OpportunityApplicationsPage = () => {
           <Card>
             <CardHeader>
               <CardTitle>No Applications Yet</CardTitle>
+              <CardDescription>
+                There are currently no applications for this opportunity.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600">
-                There are no applications for this opportunity yet. Check back later.
+                When run clubs apply for this opportunity, they will appear here.
               </p>
+              <Button onClick={() => refetch()} className="mt-4">
+                Refresh
+              </Button>
             </CardContent>
           </Card>
         )}
