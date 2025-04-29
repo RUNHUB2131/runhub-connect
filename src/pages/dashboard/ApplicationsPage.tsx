@@ -61,6 +61,15 @@ const ApplicationsPage: React.FC = () => {
       });
     }
   };
+  
+  // Separate applications by status
+  const pendingApplications = applications?.filter(
+    (app: any) => app.status === 'pending'
+  ) || [];
+  
+  const acceptedApplications = applications?.filter(
+    (app: any) => app.status === 'accepted'
+  ) || [];
 
   if (isLoading) {
     return (
@@ -93,6 +102,96 @@ const ApplicationsPage: React.FC = () => {
       </div>
     );
   }
+  
+  const renderApplicationList = (appList: any[], title: string, emptyMessage: string) => {
+    if (appList.length === 0) {
+      return (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{emptyMessage}</CardDescription>
+          </CardHeader>
+        </Card>
+      );
+    }
+    
+    return (
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-4">{title}</h2>
+        <div className="space-y-4">
+          {appList.map((application: any) => {
+            const opportunity = application.opportunity;
+            return (
+              <Card 
+                key={application.id}
+                className="overflow-hidden bg-white border border-gray-200"
+              >
+                <div className="p-4">
+                  <div className="flex flex-col md:flex-row md:items-center">
+                    <div className="md:flex-1">
+                      <div className="flex items-start mb-1">
+                        <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200 mr-2">
+                          {opportunity.type}
+                        </Badge>
+                        <Badge className={`${
+                          application.status === 'accepted' 
+                            ? 'bg-green-100 text-green-800' 
+                            : application.status === 'rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {application.status === 'pending' ? 'Pending Review' : 
+                            application.status === 'accepted' ? 'Accepted' : 'Rejected'}
+                        </Badge>
+                      </div>
+                      
+                      <h3 className="text-lg font-semibold mb-1">{opportunity.title}</h3>
+                      
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mb-2">
+                        <div className="flex items-center">
+                          <CalendarDays className="h-3 w-3 mr-1" /> 
+                          <span>Complete by {opportunity.deadline}</span>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <Clock className="h-3 w-3 mr-1" /> 
+                          <span>{opportunity.duration}</span>
+                        </div>
+                        
+                        <div>
+                          <span className="font-medium">Applied on {new Date(application.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-3 md:mt-0 md:ml-4 flex items-center space-x-2">
+                      <span className="text-lg font-bold text-orange-500">{opportunity.reward}</span>
+                      <div className="flex space-x-2">
+                        <Button 
+                          className="bg-orange-500 hover:bg-orange-600"
+                          onClick={() => handleViewDetails(opportunity.id)}
+                        >
+                          View Details
+                        </Button>
+                        {application.status === 'pending' && (
+                          <Button 
+                            className="bg-red-500 hover:bg-red-600"
+                            onClick={() => handleRetractApplication(application.id)}
+                          >
+                            Retract
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex-1 p-6 bg-gray-50">
@@ -100,77 +199,19 @@ const ApplicationsPage: React.FC = () => {
         <h1 className="text-2xl font-bold mb-6">My Applications</h1>
         
         {applications && applications.length > 0 ? (
-          <div className="space-y-4">
-            {applications.map((application: any) => {
-              const opportunity = application.opportunity;
-              return (
-                <Card 
-                  key={application.id}
-                  className="overflow-hidden bg-white border border-gray-200"
-                >
-                  <div className="p-4">
-                    <div className="flex flex-col md:flex-row md:items-center">
-                      <div className="md:flex-1">
-                        <div className="flex items-start mb-1">
-                          <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200 mr-2">
-                            {opportunity.type}
-                          </Badge>
-                          <Badge className={`${
-                            application.status === 'accepted' 
-                              ? 'bg-green-100 text-green-800' 
-                              : application.status === 'rejected'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {application.status === 'pending' ? 'Pending Review' : 
-                             application.status === 'accepted' ? 'Accepted' : 'Rejected'}
-                          </Badge>
-                        </div>
-                        
-                        <h3 className="text-lg font-semibold mb-1">{opportunity.title}</h3>
-                        
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mb-2">
-                          <div className="flex items-center">
-                            <CalendarDays className="h-3 w-3 mr-1" /> 
-                            <span>Complete by {opportunity.deadline}</span>
-                          </div>
-                          
-                          <div className="flex items-center">
-                            <Clock className="h-3 w-3 mr-1" /> 
-                            <span>{opportunity.duration}</span>
-                          </div>
-                          
-                          <div>
-                            <span className="font-medium">Applied on {new Date(application.created_at).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-3 md:mt-0 md:ml-4 flex items-center space-x-2">
-                        <span className="text-lg font-bold text-orange-500">{opportunity.reward}</span>
-                        <div className="flex space-x-2">
-                          <Button 
-                            className="bg-orange-500 hover:bg-orange-600"
-                            onClick={() => handleViewDetails(opportunity.id)}
-                          >
-                            View Details
-                          </Button>
-                          {application.status === 'pending' && (
-                            <Button 
-                              className="bg-red-500 hover:bg-red-600"
-                              onClick={() => handleRetractApplication(application.id)}
-                            >
-                              Retract
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+          <>
+            {renderApplicationList(
+              pendingApplications, 
+              "Pending Applications", 
+              "You don't have any pending applications."
+            )}
+            
+            {renderApplicationList(
+              acceptedApplications, 
+              "Accepted Applications", 
+              "You don't have any accepted applications yet."
+            )}
+          </>
         ) : (
           <Card>
             <CardHeader>
