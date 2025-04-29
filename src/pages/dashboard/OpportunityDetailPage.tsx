@@ -96,6 +96,20 @@ const OpportunityDetailPage: React.FC = () => {
       });
     }
   };
+
+  const handleRetractApplication = () => {
+    // Remove from localStorage
+    const appliedOpportunities = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
+    const updatedAppliedIds = appliedOpportunities.filter((appId: number) => appId !== opportunity.id);
+    localStorage.setItem('appliedOpportunities', JSON.stringify(updatedAppliedIds));
+    setApplied(false);
+    
+    // Show success toast
+    toast({
+      title: "Application Retracted",
+      description: "Your application has been successfully retracted",
+    });
+  };
   
   if (!opportunity) {
     return (
@@ -178,13 +192,21 @@ const OpportunityDetailPage: React.FC = () => {
           <div className="fixed bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200 md:relative md:bg-transparent md:border-0 md:p-0 md:mt-10">
             <div className="flex items-center justify-between max-w-4xl mx-auto">
               <div className="text-2xl font-bold text-orange-500">{opportunity.reward}</div>
-              <Button 
-                className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2"
-                disabled={applied}
-                onClick={handleApply}
-              >
-                {applied ? "Applied" : "Apply"}
-              </Button>
+              {applied ? (
+                <Button 
+                  className="bg-red-500 hover:bg-red-600 text-white px-8 py-2"
+                  onClick={handleRetractApplication}
+                >
+                  Retract Application
+                </Button>
+              ) : (
+                <Button 
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2"
+                  onClick={handleApply}
+                >
+                  Apply
+                </Button>
+              )}
             </div>
           </div>
         </div>

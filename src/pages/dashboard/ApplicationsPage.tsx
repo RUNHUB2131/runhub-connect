@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Clock, FileText } from "lucide-react";
+import { CalendarDays, Clock, FileText, X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data for opportunities
 const allOpportunities = [
@@ -61,6 +62,7 @@ const allOpportunities = [
 const ApplicationsPage: React.FC = () => {
   const navigate = useNavigate();
   const [appliedOpportunities, setAppliedOpportunities] = useState<any[]>([]);
+  const { toast } = useToast();
 
   useEffect(() => {
     // In a real app, this would be fetched from an API
@@ -71,6 +73,24 @@ const ApplicationsPage: React.FC = () => {
 
   const handleViewDetails = (id: number) => {
     navigate(`/dashboard/opportunities/${id}`);
+  };
+
+  const handleRetractApplication = (id: number) => {
+    // Remove from localStorage
+    const appliedIds = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
+    const updatedAppliedIds = appliedIds.filter((appId: number) => appId !== id);
+    localStorage.setItem('appliedOpportunities', JSON.stringify(updatedAppliedIds));
+    
+    // Update the UI
+    setAppliedOpportunities(prevOpportunities => 
+      prevOpportunities.filter(opp => opp.id !== id)
+    );
+    
+    // Show success toast
+    toast({
+      title: "Application Retracted",
+      description: "Your application has been successfully retracted",
+    });
   };
 
   return (
@@ -116,13 +136,20 @@ const ApplicationsPage: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="mt-3 md:mt-0 md:ml-4 flex items-center">
-                      <span className="text-lg font-bold text-orange-500 mr-3">{opportunity.reward}</span>
+                    <div className="mt-3 md:mt-0 md:ml-4 flex items-center space-x-2">
+                      <span className="text-lg font-bold text-orange-500">{opportunity.reward}</span>
                       <Button 
                         className="bg-orange-500 hover:bg-orange-600"
                         onClick={() => handleViewDetails(opportunity.id)}
                       >
                         View Details
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600"
+                        onClick={() => handleRetractApplication(opportunity.id)}
+                      >
+                        <X className="mr-1 h-4 w-4" /> Retract
                       </Button>
                     </div>
                   </div>
