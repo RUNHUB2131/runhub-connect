@@ -10,12 +10,20 @@ import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import UserTypeSelection from "./pages/UserTypeSelection";
 
-// Dashboard pages
+// Run Club Dashboard pages
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import ProfilePage from "./pages/dashboard/ProfilePage";
 import OpportunitiesPage from "./pages/dashboard/OpportunitiesPage";
 import ApplicationsPage from "./pages/dashboard/ApplicationsPage";
 import MessagesPage from "./pages/dashboard/MessagesPage";
+
+// Brand Dashboard pages
+import BrandDashboardLayout from "./pages/BrandDashboard";
+import BrandDashboard from "./pages/dashboard/brand/BrandDashboard";
+import BrandProfilePage from "./pages/dashboard/brand/BrandProfilePage";
+import PostOpportunityPage from "./pages/dashboard/brand/PostOpportunityPage";
+import ManageOpportunitiesPage from "./pages/dashboard/brand/ManageOpportunitiesPage";
+import BrandMessagesPage from "./pages/dashboard/brand/BrandMessagesPage";
 
 const queryClient = new QueryClient();
 
@@ -30,13 +38,22 @@ const App = () => (
           <Route path="/user-type" element={<UserTypeSelection />} />
           <Route path="/auth/:action" element={<AuthPage />} />
           
-          {/* Dashboard Routes */}
+          {/* Run Club Dashboard Routes */}
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="opportunities" element={<OpportunitiesPage />} />
             <Route path="applications" element={<ApplicationsPage />} />
             <Route path="messages" element={<MessagesPage />} />
+          </Route>
+          
+          {/* Brand Dashboard Routes */}
+          <Route path="/dashboard/brand" element={<BrandDashboardLayout />}>
+            <Route index element={<BrandDashboard />} />
+            <Route path="profile" element={<BrandProfilePage />} />
+            <Route path="post-opportunity" element={<PostOpportunityPage />} />
+            <Route path="manage-opportunities" element={<ManageOpportunitiesPage />} />
+            <Route path="messages" element={<BrandMessagesPage />} />
           </Route>
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
