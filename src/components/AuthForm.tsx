@@ -39,12 +39,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ action, userType }) => {
     setIsLoading(true);
     
     try {
-      // For demo purposes, we'll now simulate a "real" login that knows the user type
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
       
-      // In a real app with Supabase, we would fetch user metadata or profile after login
-      // to determine the user type. For now, we'll simulate this.
-      const userTypeFromLogin = localStorage.getItem('userType') || 'runclub';
+      if (error) throw error;
       
       toast({
         title: "Success!",
@@ -52,16 +52,23 @@ const AuthForm: React.FC<AuthFormProps> = ({ action, userType }) => {
         variant: "default",
       });
       
+      // Store the user type in local storage for routing purposes
+      if (userType) {
+        localStorage.setItem('userType', userType);
+      }
+      
       // Redirect based on user type
-      if (userTypeFromLogin === 'brand') {
+      const userTypeToUse = localStorage.getItem('userType') || 'runclub';
+      if (userTypeToUse === 'brand') {
         navigate('/dashboard/brand');
       } else {
         navigate('/dashboard/opportunities');
       }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: "Error",
-        description: "Failed to log in. Please check your credentials.",
+        description: error.message || "Failed to log in. Please check your credentials.",
         variant: "destructive",
       });
     } finally {
@@ -84,18 +91,54 @@ const AuthForm: React.FC<AuthFormProps> = ({ action, userType }) => {
     }
     
     try {
-      // Simulate registration process
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Create the user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            user_type: userType,
+            org_name: formData.orgName
+          }
+        }
+      });
       
-      // In a real app, we would create the user in Supabase and store user metadata
-      // For this demo, we'll store the user type in localStorage to simulate it
+      if (authError) throw authError;
+      
+      // Store user type for routing
       localStorage.setItem('userType', userType);
       
       toast({
         title: "Registration successful!",
-        description: "Your account has been created.",
+        description: "Your account has been created. Check your email for confirmation if required.",
         variant: "default",
       });
+      
+      // Create profile record based on user type
+      if (userType === 'runclub') {
+        const { error: profileError } = await supabase
+          .from('runclub_profiles')
+          .insert({
+            id: authData.user.id,
+            club_name: formData.orgName || 'My Run Club'
+          });
+          
+        if (profileError) {
+          console.error('Error creating run club profile:', profileError);
+        }
+      } else if (userType === 'brand') {
+        const { error: brandError } = await supabase
+          .from('brand_profiles')
+          .insert({
+            id: authData.user.id,
+            company_name: formData.orgName || 'My Brand'
+          });
+          
+        if (brandError) {
+          console.error('Error creating brand profile:', brandError);
+        }
+      }
       
       // Redirect based on user type
       if (userType === 'brand') {
@@ -104,9 +147,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ action, userType }) => {
         navigate('/dashboard/opportunities');
       }
     } catch (error) {
+      console.error('Registration error:', error);
       toast({
         title: "Registration failed",
-        description: "There was an error creating your account.",
+        description: error.message || "There was an error creating your account.",
         variant: "destructive",
       });
     } finally {

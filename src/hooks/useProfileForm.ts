@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 // Define the form schema with validation rules
 export const profileFormSchema = z.object({
@@ -49,44 +49,21 @@ export function useProfileForm(initialValues = defaultProfileValues) {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [selectedRunType, setSelectedRunType] = useState<string>("");
   const [selectedEventExp, setSelectedEventExp] = useState<string>("");
-  const [profileId, setProfileId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: initialValues
   });
 
-  // Check authentication status on mount
+  // Fetch profile data when user is available
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data && data.session && data.session.user) {
-        console.log("User authenticated:", data.session.user.id);
-        setProfileId(data.session.user.id);
-      } else {
-        console.log("No authenticated user found");
-        setProfileId(null);
-      }
-    };
-
-    checkAuthStatus();
-
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event);
-      if (session && session.user) {
-        setProfileId(session.user.id);
-      } else {
-        setProfileId(null);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (user) {
+      fetchProfileData(user.id);
+    }
+  }, [user]);
 
   // Toggle section editing
   const toggleEditSection = (section: string | null) => {
@@ -98,11 +75,7 @@ export function useProfileForm(initialValues = defaultProfileValues) {
     setIsLoading(true);
     
     try {
-      // Get current user session to ensure we have the most up-to-date auth state
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
-      
-      if (!userId) {
+      if (!user) {
         toast({
           title: "Authentication Error",
           description: "You must be logged in to update your profile. Please log in and try again.",
@@ -112,13 +85,13 @@ export function useProfileForm(initialValues = defaultProfileValues) {
         return;
       }
 
-      console.log("Updating profile for user:", userId);
+      console.log("Updating profile for user:", user.id);
       
       // Update the profile in Supabase
       const { error } = await supabase
         .from('runclub_profiles')
         .upsert({
-          id: userId,
+          id: user.id,
           club_name: data.clubName,
           location: data.location,
           member_count: data.memberCount,
@@ -155,6 +128,55 @@ export function useProfileForm(initialValues = defaultProfileValues) {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Fetch profile data from Supabase
+  const fetchProfileData = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('runclub_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile data:', error);
+        return;
+      }
+
+      if (data) {
+        updateFormWithProfileData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile data:', error);
+    }
+  };
+
+  // Update form with profile data
+  const updateFormWithProfileData = (profileData: any) => {
+    // Only update if we're not currently editing
+    if (!isEditing) {
+      // Map database fields to form fields
+      form.reset({
+        clubName: profileData.club_name || form.getValues("clubName"),
+        location: profileData.location || form.getValues("location"),
+        memberCount: profileData.member_count || form.getValues("memberCount"),
+        description: profileData.description || form.getValues("description"),
+        website: profileData.website || form.getValues("website"),
+        // Map other fields as needed
+        // For fields not in the database yet, keep the current form values
+        instagramHandle: form.getValues("instagramHandle"),
+        instagramFollowers: form.getValues("instagramFollowers"),
+        twitterHandle: form.getValues("twitterHandle"),
+        twitterFollowers: form.getValues("twitterFollowers"),
+        facebookPage: form.getValues("facebookPage"),
+        facebookFollowers: form.getValues("facebookFollowers"),
+        averageGroupSize: form.getValues("averageGroupSize"),
+        coreDemographic: form.getValues("coreDemographic"),
+        runTypes: form.getValues("runTypes"),
+        eventExperience: form.getValues("eventExperience")
+      });
     }
   };
 
@@ -205,8 +227,7 @@ export function useProfileForm(initialValues = defaultProfileValues) {
     isLoading,
     selectedRunType,
     selectedEventExp,
-    profileId,
-    setProfileId,
+    user,
     setSelectedRunType,
     setSelectedEventExp,
     toggleEditSection,
