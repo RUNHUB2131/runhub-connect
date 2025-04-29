@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthFormProps {
   action: 'login' | 'register';
@@ -38,17 +39,25 @@ const AuthForm: React.FC<AuthFormProps> = ({ action, userType }) => {
     setIsLoading(true);
     
     try {
-      // For demo purposes, simulate a login delay
+      // For demo purposes, we'll now simulate a "real" login that knows the user type
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Demo success
+      // In a real app with Supabase, we would fetch user metadata or profile after login
+      // to determine the user type. For now, we'll simulate this.
+      const userTypeFromLogin = localStorage.getItem('userType') || 'runclub';
+      
       toast({
         title: "Success!",
         description: "You have been logged in successfully.",
         variant: "default",
       });
       
-      navigate('/dashboard');
+      // Redirect based on user type
+      if (userTypeFromLogin === 'brand') {
+        navigate('/dashboard/brand');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -75,17 +84,25 @@ const AuthForm: React.FC<AuthFormProps> = ({ action, userType }) => {
     }
     
     try {
-      // For demo purposes, simulate a registration delay
+      // Simulate registration process
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Demo success
+      // In a real app, we would create the user in Supabase and store user metadata
+      // For this demo, we'll store the user type in localStorage to simulate it
+      localStorage.setItem('userType', userType);
+      
       toast({
         title: "Registration successful!",
         description: "Your account has been created.",
         variant: "default",
       });
       
-      navigate('/dashboard');
+      // Redirect based on user type
+      if (userType === 'brand') {
+        navigate('/dashboard/brand');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       toast({
         title: "Registration failed",
