@@ -24,6 +24,10 @@ export async function fetchProfileData(userId: string) {
 
 export async function updateProfileData(userId: string, data: ProfileFormValues) {
   try {
+    // Ensure arrays are initialized
+    const runTypes = Array.isArray(data.runTypes) ? data.runTypes : [];
+    const eventExperience = Array.isArray(data.eventExperience) ? data.eventExperience : [];
+    
     // Create a structured object that maps form fields to database columns
     const profileData = {
       id: userId, // This is essential for Row Level Security
@@ -51,8 +55,8 @@ export async function updateProfileData(userId: string, data: ProfileFormValues)
       community_data: {
         average_group_size: data.averageGroupSize,
         core_demographic: data.coreDemographic,
-        run_types: data.runTypes,
-        event_experience: data.eventExperience
+        run_types: runTypes,
+        event_experience: eventExperience
       },
       updated_at: new Date().toISOString()
     };

@@ -24,9 +24,14 @@ export function useProfileForm(initialValues = defaultProfileValues) {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Initialize the form with default values that have empty arrays for runTypes and eventExperience
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues: initialValues
+    defaultValues: {
+      ...initialValues,
+      runTypes: initialValues.runTypes || [],
+      eventExperience: initialValues.eventExperience || []
+    }
   });
 
   const tagManagement = useTagManagement(form);
@@ -49,6 +54,9 @@ export function useProfileForm(initialValues = defaultProfileValues) {
         updateFormWithProfileData(data);
       } else {
         console.log("No profile data found");
+        // Initialize with empty arrays if no data found
+        form.setValue("runTypes", []);
+        form.setValue("eventExperience", []);
       }
     } catch (error) {
       console.error("Error loading profile data:", error);
@@ -57,10 +65,13 @@ export function useProfileForm(initialValues = defaultProfileValues) {
         description: "Could not load your profile data",
         variant: "destructive"
       });
+      // Initialize with empty arrays if error occurs
+      form.setValue("runTypes", []);
+      form.setValue("eventExperience", []);
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, form]);
 
   // Toggle section editing
   const toggleEditSection = useCallback((section: string | null) => {
@@ -80,6 +91,9 @@ export function useProfileForm(initialValues = defaultProfileValues) {
         memberCount: profileData.member_count || 0,
         description: profileData.description || '',
         website: profileData.website || '',
+        // Initialize arrays to empty if undefined
+        runTypes: [],
+        eventExperience: []
       };
       
       // Extract social media data if available
@@ -108,8 +122,9 @@ export function useProfileForm(initialValues = defaultProfileValues) {
         
         formData.averageGroupSize = community.average_group_size || 0;
         formData.coreDemographic = community.core_demographic || '';
-        formData.runTypes = community.run_types || [];
-        formData.eventExperience = community.event_experience || [];
+        // Ensure we have arrays even if the data is null/undefined
+        formData.runTypes = Array.isArray(community.run_types) ? community.run_types : [];
+        formData.eventExperience = Array.isArray(community.event_experience) ? community.event_experience : [];
       }
       
       // Update the form with the extracted data

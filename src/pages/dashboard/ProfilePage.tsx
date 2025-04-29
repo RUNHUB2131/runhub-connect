@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
@@ -43,15 +44,19 @@ const ProfilePage: React.FC = () => {
 
   // Get available run types (those not already selected)
   const getAvailableRunTypes = () => {
-    const currentRunTypes = form.getValues("runTypes");
+    const currentRunTypes = form.getValues("runTypes") || [];
     return RUN_TYPES.filter(type => !currentRunTypes.includes(type));
   };
 
   // Get available event experiences (those not already selected)
   const getAvailableEventExperiences = () => {
-    const currentEvents = form.getValues("eventExperience");
+    const currentEvents = form.getValues("eventExperience") || [];
     return EVENT_EXPERIENCES.filter(event => !currentEvents.includes(event));
   };
+
+  // Initialize empty arrays for runTypes and eventExperience if they're undefined
+  const runTypes = form.watch("runTypes") || [];
+  const eventExperience = form.watch("eventExperience") || [];
 
   return (
     <div className="flex-1 p-6 bg-gray-50">
@@ -522,7 +527,7 @@ const ProfilePage: React.FC = () => {
                     <div>
                       <h3 className="font-medium mb-2">Run Types</h3>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {form.watch("runTypes").map((tag) => (
+                        {runTypes.map((tag) => (
                           <div key={tag} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
                             {tag}
                             <button 
@@ -570,7 +575,7 @@ const ProfilePage: React.FC = () => {
                     <div>
                       <h3 className="font-medium mb-2">Event Experience</h3>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {form.watch("eventExperience").map((tag) => (
+                        {eventExperience.map((tag) => (
                           <div key={tag} className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
                             {tag}
                             <button 
@@ -622,7 +627,7 @@ const ProfilePage: React.FC = () => {
                         <Users className="h-5 w-5 text-blue-600 mr-2" />
                         <div>
                           <p className="text-sm font-medium">Average Group Size</p>
-                          <p className="text-2xl font-bold">{form.getValues("averageGroupSize")} runners</p>
+                          <p className="text-2xl font-bold">{form.getValues("averageGroupSize") || 0} runners</p>
                         </div>
                       </div>
                       
@@ -630,7 +635,7 @@ const ProfilePage: React.FC = () => {
                         <User className="h-5 w-5 text-green-600 mr-2" />
                         <div>
                           <p className="text-sm font-medium">Core Demographic</p>
-                          <p className="text-2xl font-bold">{form.getValues("coreDemographic")} years</p>
+                          <p className="text-2xl font-bold">{form.getValues("coreDemographic") || "Not specified"} years</p>
                         </div>
                       </div>
                     </div>
@@ -638,22 +643,26 @@ const ProfilePage: React.FC = () => {
                     <div>
                       <p className="text-sm font-medium mb-2">Run Types</p>
                       <div className="flex flex-wrap gap-2">
-                        {form.getValues("runTypes").map((tag) => (
+                        {runTypes.length > 0 ? runTypes.map((tag) => (
                           <div key={tag} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
                             {tag}
                           </div>
-                        ))}
+                        )) : (
+                          <p className="text-sm text-gray-500">No run types specified</p>
+                        )}
                       </div>
                     </div>
                     
                     <div>
                       <p className="text-sm font-medium mb-2">Event Experience</p>
                       <div className="flex flex-wrap gap-2">
-                        {form.getValues("eventExperience").map((tag) => (
+                        {eventExperience.length > 0 ? eventExperience.map((tag) => (
                           <div key={tag} className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">
                             {tag}
                           </div>
-                        ))}
+                        )) : (
+                          <p className="text-sm text-gray-500">No event experience specified</p>
+                        )}
                       </div>
                     </div>
                   </div>
