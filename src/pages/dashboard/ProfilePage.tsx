@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
@@ -138,6 +139,18 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // Get available run types (those not already selected)
+  const getAvailableRunTypes = () => {
+    const currentRunTypes = form.getValues("runTypes");
+    return RUN_TYPES.filter(type => !currentRunTypes.includes(type));
+  };
+
+  // Get available event experiences (those not already selected)
+  const getAvailableEventExperiences = () => {
+    const currentEvents = form.getValues("eventExperience");
+    return EVENT_EXPERIENCES.filter(event => !currentEvents.includes(event));
+  };
+
   return (
     <div className="flex-1 p-6 bg-gray-50">
       <div className="max-w-4xl mx-auto">
@@ -259,19 +272,19 @@ const ProfilePage: React.FC = () => {
                 ) : (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
+                      <div className="bg-white p-4 rounded-md border">
                         <h3 className="font-medium text-sm mb-1">Club Name</h3>
                         <p className="text-lg">{form.getValues("clubName")}</p>
                       </div>
-                      <div>
+                      <div className="bg-white p-4 rounded-md border">
                         <h3 className="font-medium text-sm mb-1">Location</h3>
                         <p className="text-lg">{form.getValues("location")}</p>
                       </div>
-                      <div>
+                      <div className="bg-white p-4 rounded-md border">
                         <h3 className="font-medium text-sm mb-1">Member Count</h3>
                         <p className="text-lg">{form.getValues("memberCount")} members</p>
                       </div>
-                      <div>
+                      <div className="bg-white p-4 rounded-md border">
                         <h3 className="font-medium text-sm mb-1">Website</h3>
                         {form.getValues("website") ? (
                           <a 
@@ -288,7 +301,7 @@ const ProfilePage: React.FC = () => {
                         )}
                       </div>
                     </div>
-                    <div>
+                    <div className="bg-white p-4 rounded-md border">
                       <h3 className="font-medium text-sm mb-1">Description</h3>
                       <p className="text-base">{form.getValues("description")}</p>
                     </div>
@@ -604,7 +617,7 @@ const ProfilePage: React.FC = () => {
                             <SelectValue placeholder="Select run type" />
                           </SelectTrigger>
                           <SelectContent>
-                            {RUN_TYPES.filter(type => !form.getValues("runTypes").includes(type)).map(type => (
+                            {getAvailableRunTypes().map(type => (
                               <SelectItem key={type} value={type}>{type}</SelectItem>
                             ))}
                           </SelectContent>
@@ -647,7 +660,7 @@ const ProfilePage: React.FC = () => {
                             <SelectValue placeholder="Select event" />
                           </SelectTrigger>
                           <SelectContent>
-                            {EVENT_EXPERIENCES.filter(event => !form.getValues("eventExperience").includes(event)).map(event => (
+                            {getAvailableEventExperiences().map(event => (
                               <SelectItem key={event} value={event}>{event}</SelectItem>
                             ))}
                           </SelectContent>
