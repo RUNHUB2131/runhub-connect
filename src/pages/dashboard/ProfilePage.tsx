@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { User, Users, Instagram, Twitter, Facebook, Link, ExternalLink, Plus, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Accordion,
   AccordionContent,
@@ -50,6 +50,7 @@ const ProfilePage: React.FC = () => {
   const [selectedRunType, setSelectedRunType] = useState<string>("");
   const [selectedEventExp, setSelectedEventExp] = useState<string>("");
   const { toast } = useToast();
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   // Set up form with default values
   const form = useForm<ProfileFormValues>({
@@ -73,22 +74,169 @@ const ProfilePage: React.FC = () => {
     }
   });
 
+  // Set up real-time subscription to profile updates
+  useEffect(() => {
+    // Fetch the current user's ID
+    const fetchUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setProfileId(user.id);
+        // Fetch user's profile data
+        await fetchProfileData(user.id);
+      }
+    };
+
+    fetchUserId();
+
+    // Return cleanup function
+    return () => {
+      // Clean up subscriptions when component unmounts
+    };
+  }, []);
+
+  // Set up real-time subscription when profileId is available
+  useEffect(() => {
+    if (!profileId) return;
+
+    // Subscribe to changes in the runclub_profiles table for this specific profile
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'runclub_profiles',
+          filter: `id=eq.${profileId}`
+        },
+        (payload) => {
+          console.log('Profile update received:', payload);
+          if (payload.new) {
+            // Update the form with the new data
+            updateFormWithProfileData(payload.new);
+            
+            // Show toast notification
+            toast({
+              title: "Profile updated",
+              description: "Your profile has been updated in real-time.",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Clean up subscription when component unmounts or profileId changes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profileId, toast]);
+
+  // Fetch profile data from Supabase
+  const fetchProfileData = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('runclub_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile data:', error);
+        return;
+      }
+
+      if (data) {
+        updateFormWithProfileData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile data:', error);
+    }
+  };
+
+  // Update form with profile data
+  const updateFormWithProfileData = (profileData: any) => {
+    // Only update if we're not currently editing
+    if (!isEditing) {
+      // Map database fields to form fields
+      form.reset({
+        clubName: profileData.club_name || form.getValues("clubName"),
+        location: profileData.location || form.getValues("location"),
+        memberCount: profileData.member_count || form.getValues("memberCount"),
+        description: profileData.description || form.getValues("description"),
+        website: profileData.website || form.getValues("website"),
+        // Map other fields as needed
+        // For fields not in the database yet, keep the current form values
+        instagramHandle: form.getValues("instagramHandle"),
+        instagramFollowers: form.getValues("instagramFollowers"),
+        twitterHandle: form.getValues("twitterHandle"),
+        twitterFollowers: form.getValues("twitterFollowers"),
+        facebookPage: form.getValues("facebookPage"),
+        facebookFollowers: form.getValues("facebookFollowers"),
+        averageGroupSize: form.getValues("averageGroupSize"),
+        coreDemographic: form.getValues("coreDemographic"),
+        runTypes: form.getValues("runTypes"),
+        eventExperience: form.getValues("eventExperience")
+      });
+    }
+  };
+
   // Handle section editing toggle
   const toggleEditSection = (section: string | null) => {
     setIsEditing(section);
   };
 
   // Handle form submission
-  const onSubmit = (data: ProfileFormValues) => {
+  const onSubmit = async (data: ProfileFormValues) => {
     console.log("Form data submitted:", data);
-    // Here we would typically save to the backend
     
-    toast({
-      title: "Profile updated",
-      description: "Your profile changes have been saved.",
-    });
-    
-    setIsEditing(null);
+    if (!profileId) {
+      toast({
+        title: "Error",
+        description: "User not authenticated. Please log in to update your profile.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Update the profile in Supabase
+      const { error } = await supabase
+        .from('runclub_profiles')
+        .upsert({
+          id: profileId,
+          club_name: data.clubName,
+          location: data.location,
+          member_count: data.memberCount,
+          description: data.description,
+          website: data.website,
+          // Add other fields as needed
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        toast({
+          title: "Error updating profile",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Profile updated",
+        description: "Your profile changes have been saved.",
+      });
+      
+      setIsEditing(null);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while updating your profile.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Add new run type tag
