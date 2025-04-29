@@ -37,17 +37,14 @@ const OpportunityDetailPage: React.FC = () => {
     queryFn: async () => {
       if (!id) return { applied: false };
       
-      // Here we check if the user has already applied by looking at the applications in the cache
+      // Check if the user has already applied by looking at the applications in the cache
       const applications = queryClient.getQueryData(['applications']) as any[];
       if (applications) {
         const hasApplied = applications.some(app => app.opportunity_id === id);
         return { applied: hasApplied };
       }
       
-      // If no cached data, fallback to localStorage check
-      const appliedOpportunities = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
-      const hasApplied = appliedOpportunities.includes(id);
-      return { applied: hasApplied };
+      return { applied: false };
     },
     initialData: { applied: false }
   });
@@ -67,13 +64,6 @@ const OpportunityDetailPage: React.FC = () => {
           variant: "destructive",
         });
         return;
-      }
-      
-      // Update localStorage for fallback
-      const appliedOpportunities = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
-      if (!appliedOpportunities.includes(id)) {
-        appliedOpportunities.push(id);
-        localStorage.setItem('appliedOpportunities', JSON.stringify(appliedOpportunities));
       }
       
       // Invalidate applications query to force refetch
@@ -97,24 +87,7 @@ const OpportunityDetailPage: React.FC = () => {
     }
   };
 
-  const handleRetractApplication = () => {
-    if (!id) return;
-    
-    // Remove from localStorage fallback
-    const appliedOpportunities = JSON.parse(localStorage.getItem('appliedOpportunities') || '[]');
-    const updatedAppliedIds = appliedOpportunities.filter((appId: string) => appId !== id);
-    localStorage.setItem('appliedOpportunities', JSON.stringify(updatedAppliedIds));
-    
-    // Show success toast
-    toast({
-      title: "Application Retracted",
-      description: "Your application has been successfully retracted",
-    });
-    
-    // Force refetch of applications data
-    queryClient.invalidateQueries({ queryKey: ['applications'] });
-    
-    // Navigate to applications page
+  const handleGoToApplications = () => {
     navigate("/dashboard/applications");
   };
   
@@ -211,10 +184,10 @@ const OpportunityDetailPage: React.FC = () => {
               <div className="text-2xl font-bold text-orange-500">{opportunity.reward}</div>
               {applicationStatus.applied ? (
                 <Button 
-                  className="bg-red-500 hover:bg-red-600 text-white px-8 py-2"
-                  onClick={handleRetractApplication}
+                  className="bg-green-500 hover:bg-green-600 text-white px-8 py-2"
+                  onClick={handleGoToApplications}
                 >
-                  Retract Application
+                  View Application
                 </Button>
               ) : (
                 <Button 

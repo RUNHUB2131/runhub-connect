@@ -145,8 +145,8 @@ export async function fetchUserApplications() {
       throw new Error("Authentication error: " + (userError?.message || "User not found"));
     }
 
-    // Fetch applications made by this user, joining with opportunities to get details
-    const { data, error } = await supabase
+    // Fetch applications made by this user
+    const { data: applications, error } = await supabase
       .from("applications")
       .select(`
         *,
@@ -159,7 +159,7 @@ export async function fetchUserApplications() {
       throw new Error("Failed to fetch applications: " + error.message);
     }
 
-    return { data, error: null };
+    return { data: applications, error: null };
   } catch (error: any) {
     console.error("Error fetching applications:", error);
     return { data: null, error: error.message };
