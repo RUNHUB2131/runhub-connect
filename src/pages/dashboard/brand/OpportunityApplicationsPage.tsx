@@ -79,6 +79,7 @@ const OpportunityApplicationsPage = () => {
   // Refetch on mount to ensure we have the latest data
   useEffect(() => {
     if (id) {
+      console.log("Initial fetch for applications with ID:", id);
       refetch();
     }
   }, [id, refetch]);
