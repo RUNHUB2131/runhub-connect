@@ -11,32 +11,41 @@ export type Database = {
     Tables: {
       brand_profiles: {
         Row: {
+          company_data: Json | null
           company_name: string | null
           created_at: string
           description: string | null
           id: string
           industry: string | null
+          location: string | null
           logo_url: string | null
+          social_media: Json | null
           updated_at: string
           website: string | null
         }
         Insert: {
+          company_data?: Json | null
           company_name?: string | null
           created_at?: string
           description?: string | null
           id: string
           industry?: string | null
+          location?: string | null
           logo_url?: string | null
+          social_media?: Json | null
           updated_at?: string
           website?: string | null
         }
         Update: {
+          company_data?: Json | null
           company_name?: string | null
           created_at?: string
           description?: string | null
           id?: string
           industry?: string | null
+          location?: string | null
           logo_url?: string | null
+          social_media?: Json | null
           updated_at?: string
           website?: string | null
         }
