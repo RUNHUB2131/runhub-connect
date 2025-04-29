@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
@@ -15,15 +14,15 @@ import { User, Users, Instagram, Twitter, Facebook, Link } from "lucide-react";
 const profileFormSchema = z.object({
   clubName: z.string().min(2, "Club name must be at least 2 characters"),
   location: z.string().min(2, "Location must be at least 2 characters"),
-  memberCount: z.string().transform((val) => parseInt(val) || 0),
+  memberCount: z.coerce.number().int().nonnegative("Member count must be a positive number"),
   description: z.string().max(500, "Description cannot exceed 500 characters"),
   website: z.string().url("Please enter a valid URL").or(z.string().length(0)),
   instagramHandle: z.string().optional(),
-  instagramFollowers: z.string().transform((val) => parseInt(val) || 0),
+  instagramFollowers: z.coerce.number().int().nonnegative("Follower count must be a positive number"),
   twitterHandle: z.string().optional(),
-  twitterFollowers: z.string().transform((val) => parseInt(val) || 0),
+  twitterFollowers: z.coerce.number().int().nonnegative("Follower count must be a positive number"),
   facebookPage: z.string().optional(),
-  facebookFollowers: z.string().transform((val) => parseInt(val) || 0),
+  facebookFollowers: z.coerce.number().int().nonnegative("Follower count must be a positive number"),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -38,15 +37,15 @@ const ProfilePage: React.FC = () => {
     defaultValues: {
       clubName: "Sunrise Runners",
       location: "San Francisco, CA",
-      memberCount: "45",
+      memberCount: 45,
       description: "A diverse run club meeting twice weekly for morning and evening runs, welcoming runners of all levels. We organize monthly events and participate in local races.",
       website: "https://sunriserunners.com",
       instagramHandle: "sunrise_runners",
-      instagramFollowers: "1200",
+      instagramFollowers: 1200,
       twitterHandle: "sunriserunSF",
-      twitterFollowers: "750",
+      twitterFollowers: 750,
       facebookPage: "Sunrise Runners Club",
-      facebookFollowers: "980",
+      facebookFollowers: 980,
     }
   });
 
@@ -137,7 +136,9 @@ const ProfilePage: React.FC = () => {
                           <Input 
                             placeholder="Number of members" 
                             type="number" 
-                            {...field} 
+                            {...field}
+                            value={field.value}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                             disabled={isEditing !== "basic"} 
                           />
                         </FormControl>
@@ -236,7 +237,9 @@ const ProfilePage: React.FC = () => {
                             <Input 
                               placeholder="Follower count" 
                               type="number" 
-                              {...field} 
+                              {...field}
+                              value={field.value}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                               disabled={isEditing !== "social"} 
                             />
                           </FormControl>
@@ -275,7 +278,9 @@ const ProfilePage: React.FC = () => {
                             <Input 
                               placeholder="Follower count" 
                               type="number" 
-                              {...field} 
+                              {...field}
+                              value={field.value}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                               disabled={isEditing !== "social"} 
                             />
                           </FormControl>
@@ -314,7 +319,9 @@ const ProfilePage: React.FC = () => {
                             <Input 
                               placeholder="Follower count" 
                               type="number" 
-                              {...field} 
+                              {...field}
+                              value={field.value}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                               disabled={isEditing !== "social"} 
                             />
                           </FormControl>
