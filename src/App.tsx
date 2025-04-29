@@ -14,6 +14,7 @@ import UserTypeSelection from "./pages/UserTypeSelection";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import ProfilePage from "./pages/dashboard/ProfilePage";
 import OpportunitiesPage from "./pages/dashboard/OpportunitiesPage";
+import OpportunityDetailPage from "./pages/dashboard/OpportunityDetailPage";
 import ApplicationsPage from "./pages/dashboard/ApplicationsPage";
 import MessagesPage from "./pages/dashboard/MessagesPage";
 
@@ -40,9 +41,10 @@ const App = () => (
           
           {/* Run Club Dashboard Routes */}
           <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<Dashboard />} />
+            <Route index element={<OpportunitiesPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="opportunities" element={<OpportunitiesPage />} />
+            <Route path="opportunities/:id" element={<OpportunityDetailPage />} />
             <Route path="applications" element={<ApplicationsPage />} />
             <Route path="messages" element={<MessagesPage />} />
           </Route>

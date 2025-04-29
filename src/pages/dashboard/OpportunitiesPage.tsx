@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Clock, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Link, useNavigate } from 'react-router-dom';
 
 // Mock data for opportunities
 const opportunities = [
@@ -56,13 +57,10 @@ const opportunities = [
 
 const OpportunitiesPage: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   
-  const handleApply = (id: number) => {
-    toast({
-      title: "Application Started",
-      description: "You've started an application for this opportunity.",
-    });
-    // In a real app, this would navigate to an application form or modal
+  const handleCardClick = (id: number) => {
+    navigate(`/dashboard/opportunities/${id}`);
   };
   
   return (
@@ -77,7 +75,7 @@ const OpportunitiesPage: React.FC = () => {
               <Card 
                 key={opportunity.id} 
                 className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer bg-white border border-gray-200"
-                onClick={() => handleApply(opportunity.id)}
+                onClick={() => handleCardClick(opportunity.id)}
               >
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-3">
@@ -117,7 +115,7 @@ const OpportunitiesPage: React.FC = () => {
               <Card 
                 key={opportunity.id} 
                 className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-white border border-gray-200"
-                onClick={() => handleApply(opportunity.id)}
+                onClick={() => handleCardClick(opportunity.id)}
               >
                 <div className="p-4 flex flex-col md:flex-row md:items-center">
                   <div className="md:flex-1">
@@ -150,7 +148,13 @@ const OpportunitiesPage: React.FC = () => {
                   
                   <div className="mt-3 md:mt-0 md:ml-4 flex items-center">
                     <span className="text-xl font-bold text-orange-500 mr-3">{opportunity.reward}</span>
-                    <Button className="bg-orange-500 hover:bg-orange-600">
+                    <Button 
+                      className="bg-orange-500 hover:bg-orange-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCardClick(opportunity.id);
+                      }}
+                    >
                       View Details
                     </Button>
                   </div>

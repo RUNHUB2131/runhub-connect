@@ -14,6 +14,11 @@ const DashboardSidebar: React.FC = () => {
   const location = useLocation();
   const currentPath = location.pathname;
   
+  // Check if the current path starts with a specific base path
+  const isPathActive = (basePath: string) => {
+    return currentPath === basePath || currentPath.startsWith(`${basePath}/`);
+  };
+  
   const menuItems = [
     {
       title: "Dashboard",
@@ -52,7 +57,7 @@ const DashboardSidebar: React.FC = () => {
               <SidebarMenuItem key={item.path}>
                 <SidebarMenuButton 
                   asChild
-                  isActive={currentPath === item.path || 
+                  isActive={isPathActive(item.path) || 
                            (item.path === "/dashboard/opportunities" && currentPath === "/dashboard")}
                   tooltip={item.title}
                   aria-disabled={item.disabled}
