@@ -1,6 +1,31 @@
 import { supabase } from "@/integrations/supabase/client";
 import { OpportunityFormValues } from "@/schemas/opportunityFormSchema";
 
+// Define interfaces for our data structures
+interface Application {
+  id: string;
+  opportunity_id: string;
+  user_id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  runclub_profile?: RunclubProfile | null;
+}
+
+interface RunclubProfile {
+  id: string;
+  club_name: string | null;
+  location: string | null;
+  member_count: number | null;
+  description: string | null;
+  website: string | null;
+  logo_url: string | null;
+  community_data: Record<string, any> | null;
+  social_media: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export async function createOpportunity(opportunityData: OpportunityFormValues) {
   try {
     // Get the current user
@@ -229,8 +254,7 @@ export async function fetchOpportunityApplications(opportunityId: string) {
     
     console.log("Opportunity verified, belongs to current brand");
     
-    // Fetch applications for this opportunity with runclub profiles joined
-    // Fix the type error by using explicit table joins instead of nested selects
+    // Fetch applications for this opportunity
     const { data: applications, error: applicationsError } = await supabase
       .from("applications")
       .select(`
@@ -249,8 +273,10 @@ export async function fetchOpportunityApplications(opportunityId: string) {
     }
     
     // Now fetch the related run club profiles in a separate query
-    if (applications && applications.length > 0) {
-      const userIds = applications.map(app => app.user_id);
+    const applicationsWithProfiles: Application[] = [...(applications || [])];
+    
+    if (applicationsWithProfiles.length > 0) {
+      const userIds = applicationsWithProfiles.map(app => app.user_id);
       
       const { data: profiles, error: profilesError } = await supabase
         .from("runclub_profiles")
@@ -261,21 +287,21 @@ export async function fetchOpportunityApplications(opportunityId: string) {
         console.error("Error fetching runclub profiles:", profilesError);
       } else if (profiles) {
         // Map profiles to applications
-        const profilesMap = profiles.reduce((acc, profile) => {
-          acc[profile.id] = profile;
-          return acc;
-        }, {} as Record<string, any>);
+        const profilesMap: Record<string, RunclubProfile> = {};
+        profiles.forEach(profile => {
+          profilesMap[profile.id] = profile as RunclubProfile;
+        });
         
         // Add profiles to applications
-        applications.forEach(app => {
+        applicationsWithProfiles.forEach(app => {
           app.runclub_profile = profilesMap[app.user_id] || null;
         });
       }
     }
     
-    console.log(`Found ${applications?.length || 0} applications with profiles:`, applications);
+    console.log(`Found ${applicationsWithProfiles.length || 0} applications with profiles:`, applicationsWithProfiles);
     
-    return { data: applications, error: null };
+    return { data: applicationsWithProfiles, error: null };
     
   } catch (error: any) {
     console.error("Error in fetchOpportunityApplications:", error);
