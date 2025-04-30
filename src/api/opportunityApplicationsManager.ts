@@ -59,7 +59,8 @@ export async function fetchOpportunityApplications(opportunityId: string) {
     }
     
     // Now fetch the related run club profiles in a separate query
-    const applicationsWithProfiles: Application[] = [...(applications || [])] as Application[];
+    // Explicitly type the array to avoid excessive type instantiation depth
+    const applicationsWithProfiles: Application[] = applications ? [...applications] as Application[] : [];
     
     if (applicationsWithProfiles.length > 0) {
       console.log("Fetching profiles for applications, count:", applicationsWithProfiles.length);
@@ -81,7 +82,9 @@ export async function fetchOpportunityApplications(opportunityId: string) {
         if (profiles && profiles.length > 0) {
           const profilesMap: Record<string, RunclubProfile> = {};
           profiles.forEach(profile => {
-            profilesMap[profile.id] = profile as RunclubProfile;
+            if (profile && profile.id) {
+              profilesMap[profile.id] = profile as RunclubProfile;
+            }
           });
           
           // Add profiles to applications
@@ -108,8 +111,11 @@ export async function fetchOpportunityApplications(opportunityId: string) {
             const altProfilesMap: Record<string, RunclubProfile> = {};
             altProfiles.forEach(profile => {
               // Map by user_id if it exists, otherwise by id
+              // Safely access user_id with optional chaining
               const mapKey = profile.user_id || profile.id;
-              altProfilesMap[mapKey] = profile as RunclubProfile;
+              if (mapKey) {
+                altProfilesMap[mapKey] = profile as RunclubProfile;
+              }
             });
             
             // Add profiles to applications
