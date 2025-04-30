@@ -1,17 +1,11 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   
-  // Redirect to opportunities page when landing on the dashboard
-  useEffect(() => {
-    navigate('/dashboard/opportunities');
-  }, [navigate]);
-  
-  // This content will only show briefly before redirect
   return (
     <div className="flex-1 p-6 bg-gray-50">
       <div className="max-w-4xl mx-auto">

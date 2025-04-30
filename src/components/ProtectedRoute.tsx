@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, userType } = useAuth();
   const location = useLocation();
 
   // Ensure user type is checked
@@ -55,6 +55,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   if (!user) {
     // Save the location they were trying to access so we can redirect after login
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+  
+  // Check if user is on the root dashboard page and redirect based on userType
+  if (location.pathname === '/dashboard') {
+    const storedUserType = localStorage.getItem('userType');
+    if (storedUserType === 'brand') {
+      return <Navigate to="/dashboard/brand" replace />;
+    }
+    return <Navigate to="/dashboard/opportunities" replace />;
   }
 
   return <>{children}</>;
