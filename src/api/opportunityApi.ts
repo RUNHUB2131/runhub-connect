@@ -230,17 +230,47 @@ export async function fetchOpportunityApplications(opportunityId: string) {
     console.log("Opportunity verified, belongs to current brand");
     
     // Fetch applications for this opportunity with runclub profiles joined
+    // Fix the type error by using explicit table joins instead of nested selects
     const { data: applications, error: applicationsError } = await supabase
       .from("applications")
       .select(`
-        *,
-        runclub_profile:runclub_profiles!user_id(*)
+        id,
+        opportunity_id,
+        user_id,
+        status,
+        created_at,
+        updated_at
       `)
       .eq("opportunity_id", opportunityId);
       
     if (applicationsError) {
       console.error("Error fetching applications:", applicationsError);
       throw new Error("Failed to fetch applications: " + applicationsError.message);
+    }
+    
+    // Now fetch the related run club profiles in a separate query
+    if (applications && applications.length > 0) {
+      const userIds = applications.map(app => app.user_id);
+      
+      const { data: profiles, error: profilesError } = await supabase
+        .from("runclub_profiles")
+        .select("*")
+        .in("id", userIds);
+        
+      if (profilesError) {
+        console.error("Error fetching runclub profiles:", profilesError);
+      } else if (profiles) {
+        // Map profiles to applications
+        const profilesMap = profiles.reduce((acc, profile) => {
+          acc[profile.id] = profile;
+          return acc;
+        }, {} as Record<string, any>);
+        
+        // Add profiles to applications
+        applications.forEach(app => {
+          app.runclub_profile = profilesMap[app.user_id] || null;
+        });
+      }
     }
     
     console.log(`Found ${applications?.length || 0} applications with profiles:`, applications);
