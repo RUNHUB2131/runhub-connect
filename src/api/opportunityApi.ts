@@ -28,4 +28,4 @@ export {
 } from './runClubProfileManager';
 
 // Re-export types
-export { Application, RunclubProfile, Opportunity } from './types/opportunity.types';
+export type { Application, RunclubProfile, Opportunity } from './types/opportunity.types';

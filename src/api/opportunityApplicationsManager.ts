@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Application, RunclubProfile } from "./types/opportunity.types";
+import type { Application, RunclubProfile } from "./types/opportunity.types";
 
 export async function fetchOpportunityApplications(opportunityId: string) {
   console.log("START: fetchOpportunityApplications for ID:", opportunityId);
@@ -59,11 +59,14 @@ export async function fetchOpportunityApplications(opportunityId: string) {
     }
     
     // Now fetch the related run club profiles in a separate query
-    const applicationsWithProfiles: Application[] = [...(applications || [])];
+    const applicationsWithProfiles = [...(applications || [])] as Application[];
     
     if (applicationsWithProfiles.length > 0) {
+      console.log("Fetching profiles for applications, count:", applicationsWithProfiles.length);
       const userIds = applicationsWithProfiles.map(app => app.user_id);
+      console.log("User IDs to fetch profiles for:", userIds);
       
+      // Fetch runclub profiles
       const { data: profiles, error: profilesError } = await supabase
         .from("runclub_profiles")
         .select("*")
@@ -71,17 +74,52 @@ export async function fetchOpportunityApplications(opportunityId: string) {
         
       if (profilesError) {
         console.error("Error fetching runclub profiles:", profilesError);
-      } else if (profiles) {
-        // Map profiles to applications
-        const profilesMap: Record<string, RunclubProfile> = {};
-        profiles.forEach(profile => {
-          profilesMap[profile.id] = profile as RunclubProfile;
-        });
+      } else {
+        console.log("Fetched profiles:", profiles);
         
-        // Add profiles to applications
-        applicationsWithProfiles.forEach(app => {
-          app.runclub_profile = profilesMap[app.user_id] || null;
-        });
+        // Map profiles to applications
+        if (profiles && profiles.length > 0) {
+          const profilesMap: Record<string, RunclubProfile> = {};
+          profiles.forEach(profile => {
+            profilesMap[profile.id] = profile as RunclubProfile;
+          });
+          
+          // Add profiles to applications
+          applicationsWithProfiles.forEach(app => {
+            app.runclub_profile = profilesMap[app.user_id] || null;
+          });
+          
+          console.log("Applications with mapped profiles:", applicationsWithProfiles);
+        } else {
+          console.log("No profiles found for the user IDs");
+          
+          // Try fetching profiles where user_id might be stored in a field
+          const { data: altProfiles, error: altProfilesError } = await supabase
+            .from("runclub_profiles")
+            .select("*")
+            .in("user_id", userIds);
+            
+          if (altProfilesError) {
+            console.error("Error fetching alternate runclub profiles:", altProfilesError);
+          } else if (altProfiles && altProfiles.length > 0) {
+            console.log("Found profiles via user_id field:", altProfiles);
+            
+            // Map profiles to applications using user_id field
+            const altProfilesMap: Record<string, RunclubProfile> = {};
+            altProfiles.forEach(profile => {
+              // Map by user_id if it exists, otherwise by id
+              const mapKey = (profile as any).user_id || profile.id;
+              altProfilesMap[mapKey] = profile as RunclubProfile;
+            });
+            
+            // Add profiles to applications
+            applicationsWithProfiles.forEach(app => {
+              app.runclub_profile = altProfilesMap[app.user_id] || null;
+            });
+            
+            console.log("Applications with mapped alt profiles:", applicationsWithProfiles);
+          }
+        }
       }
     }
     

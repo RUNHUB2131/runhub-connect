@@ -22,9 +22,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import type { Application } from '@/api/types/opportunity.types';
 
 interface ApplicationsTableProps {
-  applications: any[];
+  applications: Application[];
   onViewProfile: (profileId: string) => void;
   onAcceptApplication: (applicationId: string) => void;
   onRejectApplication: (applicationId: string) => void;
@@ -37,15 +38,15 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
   onRejectApplication
 }) => {
   // Safe accessor functions for profile data
-  const getClubName = (application: any) => {
+  const getClubName = (application: Application) => {
     return application?.runclub_profile?.club_name || 'Unnamed Run Club';
   };
 
-  const getLocation = (application: any) => {
+  const getLocation = (application: Application) => {
     return application?.runclub_profile?.location || 'Unknown';
   };
 
-  const getMemberCount = (application: any) => {
+  const getMemberCount = (application: Application) => {
     return application?.runclub_profile?.member_count || '0';
   };
 
@@ -69,6 +70,22 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
     }
   };
 
+  const handleViewProfile = (application: Application) => {
+    // Log the application data to help debug
+    console.log("View profile for application:", application);
+    
+    // Use the profile ID if it exists, otherwise use the user_id
+    const profileId = application.runclub_profile?.id || application.user_id;
+    
+    console.log("Profile ID to view:", profileId);
+    
+    if (profileId) {
+      onViewProfile(profileId);
+    } else {
+      console.error("No profile ID or user ID available to view");
+    }
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -82,7 +99,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {applications.map((application: any) => (
+        {applications.map((application) => (
           <TableRow key={application.id}>
             <TableCell className="font-medium">
               {getClubName(application)}
@@ -108,8 +125,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => onViewProfile(application.user_id)}
-                  disabled={!application.user_id}
+                  onClick={() => handleViewProfile(application)}
                 >
                   <User className="h-4 w-4 mr-1" />
                   View Profile

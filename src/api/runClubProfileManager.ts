@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import type { RunclubProfile } from "./types/opportunity.types";
 
 export async function fetchRunClubProfile(profileId: string) {
   console.log("START: fetchRunClubProfile for ID:", profileId);
@@ -24,7 +25,7 @@ export async function fetchRunClubProfile(profileId: string) {
     
     if (data) {
       console.log("Found profile directly with id:", profileId);
-      return { data, error: null };
+      return { data: data as RunclubProfile, error: null };
     }
     
     // If not found by id, try using the id as user_id
@@ -40,7 +41,7 @@ export async function fetchRunClubProfile(profileId: string) {
       console.error("Error fetching run club profile by user_id:", userIdError);
     } else if (userIdData) {
       console.log("Found profile by user_id:", profileId);
-      return { data: userIdData, error: null };
+      return { data: userIdData as RunclubProfile, error: null };
     }
     
     // If still not found, check the profiles table to determine user_type
@@ -85,7 +86,7 @@ export async function fetchRunClubProfile(profileId: string) {
     }
     
     console.log("Found run club profile via user verification:", runClubData);
-    return { data: runClubData, error: null };
+    return { data: runClubData as RunclubProfile, error: null };
     
   } catch (error: any) {
     console.error("Error in fetchRunClubProfile:", error);

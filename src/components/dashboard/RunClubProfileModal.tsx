@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Dialog, 
@@ -47,7 +47,7 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
       console.log("Fetched profile data:", data);
       return data;
     },
-    enabled: !!profileId && isOpen && profileId.length > 0,
+    enabled: !!profileId && isOpen && profileId.trim().length > 0,
     retry: 1,
     meta: {
       onError: (err: Error) => {
@@ -60,6 +60,13 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
       }
     }
   });
+  
+  // Debug logging for profileId changes
+  useEffect(() => {
+    if (isOpen && profileId) {
+      console.log("Profile modal opened with ID:", profileId);
+    }
+  }, [isOpen, profileId]);
   
   // Helper function to get initials from club name
   const getInitials = (name: string | undefined | null) => {
@@ -92,7 +99,7 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
               <AlertCircle className="h-12 w-12 text-red-500" />
               <div className="text-center">
                 <p className="text-red-500 font-medium mb-1">Error loading profile</p>
-                <p className="text-sm text-gray-600 mb-4">{error.message}</p>
+                <p className="text-sm text-gray-600 mb-4">{String(error)}</p>
                 <Button 
                   onClick={() => refetch()} 
                   variant="outline"

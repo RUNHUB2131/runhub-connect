@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -45,6 +46,18 @@ export function useApplications(opportunityId: string | undefined) {
     retry: 1
   });
 
+  // Debug applications data
+  useEffect(() => {
+    if (applications) {
+      console.log("Applications in hook:", applications);
+      applications.forEach(app => {
+        if (!app.runclub_profile) {
+          console.warn("Application missing runclub_profile:", app.id);
+        }
+      });
+    }
+  }, [applications]);
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -77,6 +90,7 @@ export function useApplications(opportunityId: string | undefined) {
     if (!applicationId) return;
     
     try {
+      setAcceptingApplicationId(applicationId);
       const { data, error } = await updateApplicationStatus(applicationId, 'accepted');
       
       if (error) {
@@ -103,6 +117,8 @@ export function useApplications(opportunityId: string | undefined) {
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setAcceptingApplicationId(null);
     }
   };
 
@@ -110,6 +126,7 @@ export function useApplications(opportunityId: string | undefined) {
     if (!applicationId) return;
     
     try {
+      setRejectingApplicationId(applicationId);
       const { data, error } = await updateApplicationStatus(applicationId, 'rejected');
       
       if (error) {
@@ -136,6 +153,8 @@ export function useApplications(opportunityId: string | undefined) {
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setRejectingApplicationId(null);
     }
   };
 
@@ -151,6 +170,8 @@ export function useApplications(opportunityId: string | undefined) {
     applicationsError,
     isRefreshing,
     selectedProfileId,
+    acceptingApplicationId,
+    rejectingApplicationId,
     handleRefresh,
     handleViewProfile,
     handleAcceptApplication,
