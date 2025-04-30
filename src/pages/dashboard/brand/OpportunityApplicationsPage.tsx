@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Users, User, Check, X, RefreshCw, AlertCircle } from "lucide-react";
+import { ArrowLeft, Users, User, Check, X, RefreshCw, AlertCircle, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   fetchOpportunityById, 
@@ -215,11 +216,15 @@ const OpportunityApplicationsPage = () => {
 
   // Safe accessor functions for profile data
   const getClubName = (application: any) => {
-    return application?.profile?.club_name || 'Unnamed Run Club';
+    return application?.runclub_profile?.club_name || 'Unnamed Run Club';
   };
 
   const getLocation = (application: any) => {
-    return application?.profile?.location || 'Unknown';
+    return application?.runclub_profile?.location || 'Unknown';
+  };
+
+  const getMemberCount = (application: any) => {
+    return application?.runclub_profile?.member_count || '0';
   };
 
   if (isLoadingOpportunity || isLoadingApplications) {
@@ -291,6 +296,7 @@ const OpportunityApplicationsPage = () => {
                   <TableRow>
                     <TableHead>Run Club</TableHead>
                     <TableHead>Location</TableHead>
+                    <TableHead>Members</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Applied On</TableHead>
                     <TableHead>Actions</TableHead>
@@ -302,7 +308,16 @@ const OpportunityApplicationsPage = () => {
                       <TableCell className="font-medium">
                         {getClubName(application)}
                       </TableCell>
-                      <TableCell>{getLocation(application)}</TableCell>
+                      <TableCell className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-1 text-gray-500" />
+                        {getLocation(application)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Users className="h-4 w-4 mr-1 text-gray-500" />
+                          {getMemberCount(application)}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <span className={`capitalize px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(application.status)}`}>
                           {application.status || 'pending'}

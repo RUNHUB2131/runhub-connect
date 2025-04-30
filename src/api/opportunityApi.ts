@@ -229,10 +229,13 @@ export async function fetchOpportunityApplications(opportunityId: string) {
     
     console.log("Opportunity verified, belongs to current brand");
     
-    // Fetch applications for this opportunity
+    // Fetch applications for this opportunity with runclub profiles joined
     const { data: applications, error: applicationsError } = await supabase
       .from("applications")
-      .select("*")
+      .select(`
+        *,
+        runclub_profile:runclub_profiles!user_id(*)
+      `)
       .eq("opportunity_id", opportunityId);
       
     if (applicationsError) {
@@ -240,41 +243,9 @@ export async function fetchOpportunityApplications(opportunityId: string) {
       throw new Error("Failed to fetch applications: " + applicationsError.message);
     }
     
-    console.log(`Found ${applications?.length || 0} applications`);
+    console.log(`Found ${applications?.length || 0} applications with profiles:`, applications);
     
-    if (!applications || applications.length === 0) {
-      console.log("No applications found for this opportunity");
-      return { data: [], error: null };
-    }
-    
-    // Get user IDs from applications
-    const userIds = applications.map(app => app.user_id);
-    console.log("Looking up profiles for user IDs:", userIds);
-    
-    // Fetch profiles for the users who applied
-    const { data: profiles, error: profilesError } = await supabase
-      .from("runclub_profiles")
-      .select("*")
-      .in("id", userIds);
-    
-    if (profilesError) {
-      console.error("Error fetching profiles:", profilesError);
-      // Continue without profiles rather than failing completely
-    }
-    
-    console.log(`Found ${profiles?.length || 0} runclub profiles`);
-    
-    // Map profiles to applications
-    const enrichedApplications = applications.map(app => {
-      const profile = profiles?.find(profile => profile.id === app.user_id) || null;
-      return {
-        ...app,
-        profile
-      };
-    });
-    
-    console.log("Enriched applications data:", enrichedApplications);
-    return { data: enrichedApplications, error: null };
+    return { data: applications, error: null };
     
   } catch (error: any) {
     console.error("Error in fetchOpportunityApplications:", error);
@@ -308,8 +279,24 @@ export async function fetchRunClubProfile(profileId: string) {
       return { data, error: null };
     }
     
-    // If no profile was found, check the profiles table to determine user_type
-    console.log("No direct profile match, checking profiles table");
+    // If not found by id, try using the id as user_id
+    console.log("No direct profile match, trying as user_id");
+    
+    const { data: userIdData, error: userIdError } = await supabase
+      .from("runclub_profiles")
+      .select("*")
+      .eq("user_id", profileId)
+      .maybeSingle();
+      
+    if (userIdError) {
+      console.error("Error fetching run club profile by user_id:", userIdError);
+    } else if (userIdData) {
+      console.log("Found profile by user_id:", profileId);
+      return { data: userIdData, error: null };
+    }
+    
+    // If still not found, check the profiles table to determine user_type
+    console.log("No profile match, checking profiles table");
     
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
