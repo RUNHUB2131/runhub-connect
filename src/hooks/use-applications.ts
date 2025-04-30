@@ -1,11 +1,12 @@
-
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { 
   fetchOpportunityById, 
   fetchOpportunityApplications, 
-  updateApplicationStatus 
+  updateApplicationStatus,
+  Application,
+  Opportunity
 } from '@/api/opportunityApi';
 
 export function useApplications(opportunityId: string | undefined) {
@@ -22,7 +23,7 @@ export function useApplications(opportunityId: string | undefined) {
       if (!opportunityId) throw new Error('Opportunity ID is required');
       const { data, error } = await fetchOpportunityById(opportunityId);
       if (error) throw new Error(error);
-      return data;
+      return data as Opportunity;
     }
   });
 
@@ -39,7 +40,7 @@ export function useApplications(opportunityId: string | undefined) {
       const { data, error } = await fetchOpportunityApplications(opportunityId);
       if (error) throw new Error(error);
       console.log("Fetched applications data:", data);
-      return data || [];
+      return data as Application[] || [];
     },
     retry: 1
   });
