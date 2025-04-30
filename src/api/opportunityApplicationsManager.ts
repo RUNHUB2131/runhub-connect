@@ -59,10 +59,15 @@ export async function fetchOpportunityApplications(opportunityId: string) {
     }
     
     // Now fetch the related run club profiles in a separate query
-    // Explicitly type the array to avoid excessive type instantiation depth
-    const applicationsWithProfiles: Application[] = applications ? [...applications] as Application[] : [];
+    // Create an explicitly typed array to avoid excessive type depth
+    const applicationsWithProfiles: Application[] = [];
     
-    if (applicationsWithProfiles.length > 0) {
+    // Only if we have applications, push them into our explicitly typed array
+    if (applications && applications.length > 0) {
+      applications.forEach(app => {
+        applicationsWithProfiles.push(app as Application);
+      });
+      
       console.log("Fetching profiles for applications, count:", applicationsWithProfiles.length);
       const userIds = applicationsWithProfiles.map(app => app.user_id);
       console.log("User IDs to fetch profiles for:", userIds);
@@ -111,10 +116,13 @@ export async function fetchOpportunityApplications(opportunityId: string) {
             const altProfilesMap: Record<string, RunclubProfile> = {};
             altProfiles.forEach(profile => {
               // Map by user_id if it exists, otherwise by id
-              // Safely access user_id with optional chaining
-              const mapKey = profile.user_id || profile.id;
-              if (mapKey) {
-                altProfilesMap[mapKey] = profile as RunclubProfile;
+              if (profile) {
+                // Use type assertion to safely access user_id
+                const typedProfile = profile as RunclubProfile;
+                const mapKey = typedProfile.user_id || typedProfile.id;
+                if (mapKey) {
+                  altProfilesMap[mapKey] = typedProfile;
+                }
               }
             });
             
