@@ -22,6 +22,7 @@ export interface RunclubProfile {
   social_media: Record<string, any> | null;
   created_at: string;
   updated_at: string;
+  user_id?: string | null; // Added user_id field
 }
 
 export interface Opportunity {
