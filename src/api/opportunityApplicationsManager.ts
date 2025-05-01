@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { Application, RunclubProfile } from "./types/opportunity.types";
 
@@ -99,7 +100,7 @@ export async function fetchOpportunityApplications(opportunityId: string) {
           // Map each profile by user_id for lookup
           altProfiles.forEach(profile => {
             if (profile) {
-              const typedProfile = profile as unknown as RunclubProfile;
+              const typedProfile = profile as RunclubProfile;
               const mapKey = typedProfile.user_id || typedProfile.id;
               if (mapKey) {
                 profileMap[mapKey] = typedProfile;
