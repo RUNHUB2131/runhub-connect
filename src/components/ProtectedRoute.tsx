@@ -60,6 +60,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // Check if user is on the root dashboard page and redirect based on userType
   if (location.pathname === '/dashboard') {
     const storedUserType = localStorage.getItem('userType');
+    console.log("Dashboard redirect check - User type:", storedUserType);
     if (storedUserType === 'brand') {
       return <Navigate to="/dashboard/brand" replace />;
     }
