@@ -58,28 +58,13 @@ export async function fetchOpportunityApplications(opportunityId: string) {
       throw new Error("Failed to fetch applications: " + applicationsError.message);
     }
     
-    // Now fetch the related run club profiles in a separate query
-    // Create an explicitly typed array to avoid excessive type depth
+    // Create an explicitly typed array for our applications
     const applicationsWithProfiles: Application[] = [];
     
-    // Only if we have applications, add them to our explicitly typed array
+    // Process applications only if we have any
     if (applications && applications.length > 0) {
-      // Convert each application to our Application type
-      for (let i = 0; i < applications.length; i++) {
-        const app = applications[i];
-        applicationsWithProfiles.push({
-          id: app.id,
-          opportunity_id: app.opportunity_id,
-          user_id: app.user_id,
-          status: app.status,
-          created_at: app.created_at,
-          updated_at: app.updated_at,
-          runclub_profile: null // Initialize with null, will populate later if found
-        });
-      }
-      
-      console.log("Fetching profiles for applications, count:", applicationsWithProfiles.length);
-      const userIds = applicationsWithProfiles.map(app => app.user_id);
+      // Extract all user IDs to fetch their profiles
+      const userIds = applications.map(app => app.user_id);
       console.log("User IDs to fetch profiles for:", userIds);
       
       // Fetch runclub profiles
@@ -88,66 +73,59 @@ export async function fetchOpportunityApplications(opportunityId: string) {
         .select("*")
         .in("id", userIds);
         
-      if (profilesError) {
-        console.error("Error fetching runclub profiles:", profilesError);
-      } else {
-        console.log("Fetched profiles:", profiles);
+      // Create a map to store profiles by ID for quick lookup
+      const profileMap: Record<string, RunclubProfile> = {};
+      
+      if (!profilesError && profiles && profiles.length > 0) {
+        console.log("Fetched profiles:", profiles.length);
         
-        // Map profiles to applications
-        if (profiles && profiles.length > 0) {
-          const profilesMap: Record<string, RunclubProfile> = {};
-          profiles.forEach(profile => {
-            if (profile && profile.id) {
-              profilesMap[profile.id] = profile as RunclubProfile;
+        // Map each profile to its ID
+        profiles.forEach(profile => {
+          if (profile && profile.id) {
+            profileMap[profile.id] = profile as RunclubProfile;
+          }
+        });
+      } else {
+        console.log("No profiles found with primary key match, trying user_id field");
+        
+        // Try alternate lookup by user_id field
+        const { data: altProfiles, error: altProfilesError } = await supabase
+          .from("runclub_profiles")
+          .select("*")
+          .in("user_id", userIds);
+          
+        if (!altProfilesError && altProfiles && altProfiles.length > 0) {
+          console.log("Found profiles via user_id field:", altProfiles.length);
+          
+          // Map each profile by user_id for lookup
+          altProfiles.forEach(profile => {
+            if (profile) {
+              // Handle mapping by user_id field
+              const typedProfile = profile as unknown as RunclubProfile;
+              const mapKey = typedProfile.user_id || typedProfile.id;
+              if (mapKey) {
+                profileMap[mapKey] = typedProfile;
+              }
             }
           });
-          
-          // Add profiles to applications
-          applicationsWithProfiles.forEach(app => {
-            app.runclub_profile = profilesMap[app.user_id] || null;
-          });
-          
-          console.log("Applications with mapped profiles:", applicationsWithProfiles);
-        } else {
-          console.log("No profiles found for the user IDs");
-          
-          // Try fetching profiles where user_id might be stored in a field
-          const { data: altProfiles, error: altProfilesError } = await supabase
-            .from("runclub_profiles")
-            .select("*")
-            .in("user_id", userIds);
-            
-          if (altProfilesError) {
-            console.error("Error fetching alternate runclub profiles:", altProfilesError);
-          } else if (altProfiles && altProfiles.length > 0) {
-            console.log("Found profiles via user_id field:", altProfiles);
-            
-            // Map profiles to applications using user_id field
-            const altProfilesMap: Record<string, RunclubProfile> = {};
-            altProfiles.forEach(profile => {
-              if (profile) {
-                // Handle the profile safely with explicit typing
-                const typedProfile = profile as unknown as RunclubProfile;
-                // Use the user_id if it exists, otherwise use the id
-                const mapKey = typedProfile.user_id || typedProfile.id;
-                if (mapKey) {
-                  altProfilesMap[mapKey] = typedProfile;
-                }
-              }
-            });
-            
-            // Add profiles to applications
-            applicationsWithProfiles.forEach(app => {
-              app.runclub_profile = altProfilesMap[app.user_id] || null;
-            });
-            
-            console.log("Applications with mapped alt profiles:", applicationsWithProfiles);
-          }
         }
+      }
+      
+      // Map applications to their profiles
+      for (const app of applications) {
+        applicationsWithProfiles.push({
+          id: app.id,
+          opportunity_id: app.opportunity_id,
+          user_id: app.user_id,
+          status: app.status,
+          created_at: app.created_at,
+          updated_at: app.updated_at,
+          runclub_profile: profileMap[app.user_id] || null
+        });
       }
     }
     
-    console.log(`Found ${applicationsWithProfiles.length || 0} applications with profiles:`, applicationsWithProfiles);
+    console.log(`Found ${applicationsWithProfiles.length} applications with profiles`);
     
     return { data: applicationsWithProfiles, error: null };
     
