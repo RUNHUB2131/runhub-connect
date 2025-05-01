@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { OpportunityFormValues } from "@/schemas/opportunityFormSchema";
 import { Opportunity } from "./types/opportunity.types";
@@ -103,5 +102,46 @@ export async function fetchOpportunityById(id: string) {
   } catch (error: any) {
     console.error("Error fetching opportunity:", error);
     return { data: null, error: error.message };
+  }
+}
+
+export async function deleteOpportunity(id: string) {
+  try {
+    // Get the current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      throw new Error("Authentication error: " + (userError?.message || "User not found"));
+    }
+
+    // Verify the opportunity belongs to the brand before deletion
+    const { data: opportunity, error: fetchError } = await supabase
+      .from("opportunities")
+      .select("brand_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      throw new Error("Failed to fetch opportunity: " + fetchError.message);
+    }
+
+    if (opportunity.brand_id !== user.id) {
+      throw new Error("Unauthorized: You can only delete your own opportunities");
+    }
+
+    // Delete the opportunity
+    const { error: deleteError } = await supabase
+      .from("opportunities")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      throw new Error("Failed to delete opportunity: " + deleteError.message);
+    }
+
+    return { success: true, error: null };
+  } catch (error: any) {
+    console.error("Error deleting opportunity:", error);
+    return { success: false, error: error.message };
   }
 }

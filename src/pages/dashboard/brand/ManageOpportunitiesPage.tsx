@@ -1,17 +1,30 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Clock, Plus, Edit, Eye } from "lucide-react";
+import { CalendarDays, Clock, Plus, Edit, Eye, Trash2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
-import { fetchBrandOpportunities } from "@/api/opportunityApi";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchBrandOpportunities, deleteOpportunity } from "@/api/opportunityApi";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const ManageOpportunitiesPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   
   const { data: opportunities, isLoading, error } = useQuery({
     queryKey: ['brandOpportunities'],
@@ -23,6 +36,36 @@ const ManageOpportunitiesPage: React.FC = () => {
       return result.data || [];
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteOpportunity(id),
+    onSuccess: (data) => {
+      if (data.success) {
+        queryClient.invalidateQueries({ queryKey: ['brandOpportunities'] });
+        toast({
+          title: "Opportunity deleted",
+          description: "The opportunity has been successfully deleted.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to delete opportunity.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred while deleting the opportunity.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
+  };
 
   if (error) {
     toast({
@@ -106,6 +149,37 @@ const ManageOpportunitiesPage: React.FC = () => {
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
                       </Button>
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            className="text-red-500 border-red-200 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the opportunity
+                              and remove it from our servers.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              className="bg-red-500 hover:bg-red-600"
+                              onClick={() => handleDelete(opportunity.id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </div>

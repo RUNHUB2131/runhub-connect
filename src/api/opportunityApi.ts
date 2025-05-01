@@ -6,7 +6,8 @@ export {
   createOpportunity,
   fetchBrandOpportunities,
   fetchAllOpportunities,
-  fetchOpportunityById
+  fetchOpportunityById,
+  deleteOpportunity
 } from './opportunityManagement';
 
 // Application management functions
