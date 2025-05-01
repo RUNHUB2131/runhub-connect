@@ -62,11 +62,21 @@ export async function fetchOpportunityApplications(opportunityId: string) {
     // Create an explicitly typed array to avoid excessive type depth
     const applicationsWithProfiles: Application[] = [];
     
-    // Only if we have applications, push them into our explicitly typed array
+    // Only if we have applications, add them to our explicitly typed array
     if (applications && applications.length > 0) {
-      applications.forEach(app => {
-        applicationsWithProfiles.push(app as Application);
-      });
+      // Convert each application to our Application type
+      for (let i = 0; i < applications.length; i++) {
+        const app = applications[i];
+        applicationsWithProfiles.push({
+          id: app.id,
+          opportunity_id: app.opportunity_id,
+          user_id: app.user_id,
+          status: app.status,
+          created_at: app.created_at,
+          updated_at: app.updated_at,
+          runclub_profile: null // Initialize with null, will populate later if found
+        });
+      }
       
       console.log("Fetching profiles for applications, count:", applicationsWithProfiles.length);
       const userIds = applicationsWithProfiles.map(app => app.user_id);
@@ -115,10 +125,10 @@ export async function fetchOpportunityApplications(opportunityId: string) {
             // Map profiles to applications using user_id field
             const altProfilesMap: Record<string, RunclubProfile> = {};
             altProfiles.forEach(profile => {
-              // Map by user_id if it exists, otherwise by id
               if (profile) {
-                // Use type assertion to safely access user_id
-                const typedProfile = profile as RunclubProfile;
+                // Handle the profile safely with explicit typing
+                const typedProfile = profile as unknown as RunclubProfile;
+                // Use the user_id if it exists, otherwise use the id
                 const mapKey = typedProfile.user_id || typedProfile.id;
                 if (mapKey) {
                   altProfilesMap[mapKey] = typedProfile;
