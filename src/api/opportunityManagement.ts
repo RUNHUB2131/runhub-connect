@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { OpportunityFormValues } from "@/schemas/opportunityFormSchema";
 import { Opportunity } from "./types/opportunity.types";
@@ -129,7 +130,17 @@ export async function deleteOpportunity(id: string) {
       throw new Error("Unauthorized: You can only delete your own opportunities");
     }
 
-    // Delete the opportunity
+    // First delete all applications associated with this opportunity
+    const { error: deleteAppsError } = await supabase
+      .from("applications")
+      .delete()
+      .eq("opportunity_id", id);
+
+    if (deleteAppsError) {
+      throw new Error("Failed to delete associated applications: " + deleteAppsError.message);
+    }
+
+    // Now delete the opportunity
     const { error: deleteError } = await supabase
       .from("opportunities")
       .delete()
