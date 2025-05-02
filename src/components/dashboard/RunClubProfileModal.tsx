@@ -28,7 +28,7 @@ const RunClubProfileModal: React.FC<RunClubProfileModalProps> = ({
   isOpen,
   onClose
 }) => {
-  const { profile, isLoading, error, refetch } = useRunClubProfile(profileId);
+  const { profile, isLoading, error, refetch } = useRunClubProfile(isOpen ? profileId : null);
 
   const handleRetry = () => {
     refetch();
