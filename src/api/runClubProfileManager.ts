@@ -65,7 +65,7 @@ export async function fetchRunClubProfile(profileId: string): Promise<FetchProfi
     
     if (error) {
       console.error("Error fetching run club profile:", error);
-      throw new Error("Failed to fetch run club profile: " + error.message);
+      return { data: null, error: "Failed to fetch run club profile: " + error.message };
     }
     
     if (rawData) {
@@ -102,17 +102,17 @@ export async function fetchRunClubProfile(profileId: string): Promise<FetchProfi
       
     if (profileError) {
       console.error("Error fetching user profile:", profileError);
-      throw new Error("Failed to fetch user profile: " + profileError.message);
+      return { data: null, error: "Failed to fetch user profile: " + profileError.message };
     }
     
     if (!profileData) {
       console.error("No profile found for ID:", profileId);
-      throw new Error("No profile found for the provided ID");
+      return { data: null, error: "No profile found for the provided ID" };
     }
     
     if (profileData.user_type !== 'runclub') {
       console.error("User is not a run club:", profileData);
-      throw new Error("This user is not a run club");
+      return { data: null, error: "This user is not a run club" };
     }
     
     // Now fetch the run club profile using the same ID
@@ -124,12 +124,12 @@ export async function fetchRunClubProfile(profileId: string): Promise<FetchProfi
       
     if (runClubError) {
       console.error("Error fetching run club profile after user verification:", runClubError);
-      throw new Error("Failed to fetch run club data: " + runClubError.message);
+      return { data: null, error: "Failed to fetch run club data: " + runClubError.message };
     }
     
     if (!runClubRawData) {
       console.error("Run club profile not found for verified user:", profileId);
-      throw new Error("Run club profile not found for this user");
+      return { data: null, error: "Run club profile not found for this user" };
     }
     
     console.log("Found run club profile via user verification:", runClubRawData);
