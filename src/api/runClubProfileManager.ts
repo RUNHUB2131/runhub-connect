@@ -57,9 +57,10 @@ export async function fetchRunClubProfile(profileId: string): Promise<FetchProfi
   
   try {
     // First, check if this matches a profile in the runclub_profiles table directly
+    // Explicitly select only the columns we need instead of using "*"
     const { data: rawData, error } = await supabase
       .from("runclub_profiles")
-      .select("*")
+      .select("id, club_name, location, member_count, description, website, logo_url, community_data, social_media, created_at, updated_at, user_id")
       .eq("id", profileId)
       .maybeSingle();
     
@@ -77,9 +78,10 @@ export async function fetchRunClubProfile(profileId: string): Promise<FetchProfi
     // If not found by id, try using the id as user_id
     console.log("No direct profile match, trying as user_id");
     
+    // Explicitly select only the columns we need instead of using "*"
     const { data: userIdRawData, error: userIdError } = await supabase
       .from("runclub_profiles")
-      .select("*")
+      .select("id, club_name, location, member_count, description, website, logo_url, community_data, social_media, created_at, updated_at, user_id")
       .eq("user_id", profileId)
       .maybeSingle();
       
@@ -116,9 +118,10 @@ export async function fetchRunClubProfile(profileId: string): Promise<FetchProfi
     }
     
     // Now fetch the run club profile using the same ID
+    // Explicitly select only the columns we need instead of using "*"
     const { data: runClubRawData, error: runClubError } = await supabase
       .from("runclub_profiles")
-      .select("*")
+      .select("id, club_name, location, member_count, description, website, logo_url, community_data, social_media, created_at, updated_at, user_id")
       .eq("id", profileId)
       .maybeSingle();
       
