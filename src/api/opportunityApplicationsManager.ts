@@ -80,7 +80,7 @@ export async function fetchOpportunityApplications(opportunityId: string) {
         console.log("Fetched profiles:", profiles.length);
         
         // Map each profile to its ID
-        profiles.forEach(profile => {
+        profiles.forEach((profile: any) => {
           if (profile && profile.id) {
             profileMap[profile.id] = profile as RunclubProfile;
           }
@@ -97,14 +97,15 @@ export async function fetchOpportunityApplications(opportunityId: string) {
         if (!altProfilesError && altProfiles && altProfiles.length > 0) {
           console.log("Found profiles via user_id field:", altProfiles.length);
           
-          // Map each profile by user_id for lookup
-          altProfiles.forEach(profile => {
+          // Map each profile by user_id for lookup - Fix for TypeScript error
+          altProfiles.forEach((profile: any) => {
             if (profile) {
-              // Fix for TypeScript "excessively deep" error by using direct casting
-              const typedProfile = profile as RunclubProfile;
-              const mapKey = typedProfile.user_id || typedProfile.id;
+              // Use type assertion to avoid deep type instantiation
+              const profileData = profile as unknown as RunclubProfile;
+              const mapKey = profileData.user_id || profileData.id;
+              
               if (mapKey) {
-                profileMap[mapKey] = typedProfile;
+                profileMap[mapKey] = profileData;
               }
             }
           });
