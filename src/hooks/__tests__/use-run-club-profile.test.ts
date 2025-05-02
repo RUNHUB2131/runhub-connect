@@ -51,7 +51,7 @@ describe('useRunClubProfile', () => {
       data: mockProfile,
       error: null,
       success: true
-    } as any);
+    });
     
     // Act
     const { result } = renderHook(() => useRunClubProfile(mockProfileId), {
@@ -79,7 +79,7 @@ describe('useRunClubProfile', () => {
       data: null,
       error: errorMessage,
       success: false
-    } as any);
+    });
     
     // Act
     const { result } = renderHook(() => useRunClubProfile(mockProfileId), {
@@ -117,7 +117,7 @@ describe('useRunClubProfile', () => {
       data: mockProfile,
       error: null,
       success: true
-    } as any);
+    });
     
     // Act
     const { result } = renderHook(() => useRunClubProfile(mockProfileId), {
