@@ -21,6 +21,26 @@ function isRunclubProfileShape(obj: unknown): obj is RunclubProfile {
   );
 }
 
+// Helper function to convert raw database result to typed RunclubProfile
+function createTypedProfile(rawData: any, userId?: string): RunclubProfile | null {
+  if (!rawData) return null;
+  
+  return {
+    id: rawData.id ?? '',
+    club_name: rawData.club_name ?? '',
+    location: rawData.location ?? '',
+    member_count: typeof rawData.member_count === 'number' ? rawData.member_count : 0,
+    description: rawData.description ?? '',
+    website: rawData.website ?? '',
+    logo_url: rawData.logo_url ?? '',
+    community_data: safeJsonToRecord(rawData.community_data),
+    social_media: safeJsonToRecord(rawData.social_media),
+    created_at: rawData.created_at ?? new Date().toISOString(),
+    updated_at: rawData.updated_at ?? new Date().toISOString(),
+    user_id: userId ?? rawData.user_id ?? rawData.id ?? ''
+  };
+}
+
 export async function fetchRunClubProfile(profileId: string) {
   console.log("START: fetchRunClubProfile for ID:", profileId);
   
@@ -44,22 +64,7 @@ export async function fetchRunClubProfile(profileId: string) {
     
     if (rawData) {
       console.log("Found profile directly with id:", profileId);
-      // Use explicit property mapping instead of direct type assertion
-      const typedProfile: RunclubProfile = {
-        id: rawData.id,
-        club_name: rawData.club_name,
-        location: rawData.location,
-        member_count: rawData.member_count,
-        description: rawData.description,
-        website: rawData.website,
-        logo_url: rawData.logo_url,
-        community_data: safeJsonToRecord(rawData.community_data),
-        social_media: safeJsonToRecord(rawData.social_media),
-        created_at: rawData.created_at,
-        updated_at: rawData.updated_at,
-        user_id: rawData.id // Use ID as user_id if specific user_id field doesn't exist
-      };
-      
+      const typedProfile = createTypedProfile(rawData, profileId);
       return { data: typedProfile, error: null };
     }
     
@@ -76,23 +81,7 @@ export async function fetchRunClubProfile(profileId: string) {
       console.error("Error fetching run club profile by user_id:", userIdError);
     } else if (userIdRawData) {
       console.log("Found profile by user_id:", profileId);
-      
-      // Use explicit property mapping for type safety
-      const typedProfile: RunclubProfile = {
-        id: userIdRawData.id,
-        club_name: userIdRawData.club_name,
-        location: userIdRawData.location,
-        member_count: userIdRawData.member_count,
-        description: userIdRawData.description,
-        website: userIdRawData.website,
-        logo_url: userIdRawData.logo_url,
-        community_data: safeJsonToRecord(userIdRawData.community_data),
-        social_media: safeJsonToRecord(userIdRawData.social_media),
-        created_at: userIdRawData.created_at,
-        updated_at: userIdRawData.updated_at,
-        user_id: profileId // Use the profileId as user_id since that's what matched
-      };
-      
+      const typedProfile = createTypedProfile(userIdRawData, profileId);
       return { data: typedProfile, error: null };
     }
     
@@ -138,23 +127,7 @@ export async function fetchRunClubProfile(profileId: string) {
     }
     
     console.log("Found run club profile via user verification:", runClubRawData);
-    
-    // Use explicit property mapping for type safety
-    const typedProfile: RunclubProfile = {
-      id: runClubRawData.id,
-      club_name: runClubRawData.club_name,
-      location: runClubRawData.location,
-      member_count: runClubRawData.member_count,
-      description: runClubRawData.description,
-      website: runClubRawData.website,
-      logo_url: runClubRawData.logo_url,
-      community_data: safeJsonToRecord(runClubRawData.community_data),
-      social_media: safeJsonToRecord(runClubRawData.social_media),
-      created_at: runClubRawData.created_at,
-      updated_at: runClubRawData.updated_at,
-      user_id: profileId // Use the profileId as user_id
-    };
-    
+    const typedProfile = createTypedProfile(runClubRawData, profileId);
     return { data: typedProfile, error: null };
     
   } catch (error: any) {
