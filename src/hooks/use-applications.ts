@@ -53,6 +53,8 @@ export function useApplications(opportunityId: string | undefined) {
       applications.forEach(app => {
         if (!app.runclub_profile) {
           console.warn("Application missing runclub_profile:", app.id);
+        } else {
+          console.log(`Application ${app.id} has profile:`, app.runclub_profile);
         }
       });
     }
