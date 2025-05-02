@@ -42,14 +42,6 @@ const OpportunityApplicationsPage = () => {
     }
   }, [id]);
 
-  // Debug logging for applications data
-  useEffect(() => {
-    console.log("Applications data state:", applications);
-    if (applicationsError) {
-      console.error("Applications fetch error:", applicationsError);
-    }
-  }, [applications, applicationsError]);
-
   if (isLoadingOpportunity || isLoadingApplications) {
     return (
       <div className="flex-1 p-6 bg-gray-50 flex items-center justify-center">
