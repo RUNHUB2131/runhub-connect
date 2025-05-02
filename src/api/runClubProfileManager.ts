@@ -41,7 +41,13 @@ function createTypedProfile(rawData: any, userId?: string): RunclubProfile | nul
   };
 }
 
-export async function fetchRunClubProfile(profileId: string) {
+// Define explicit return type for the function
+type FetchProfileResult = {
+  data: RunclubProfile | null;
+  error: string | null;
+};
+
+export async function fetchRunClubProfile(profileId: string): Promise<FetchProfileResult> {
   console.log("START: fetchRunClubProfile for ID:", profileId);
   
   if (!profileId) {
