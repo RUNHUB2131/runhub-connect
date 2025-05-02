@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Application, RunclubProfile } from "./types/opportunity.types";
+import { Json } from "@/integrations/supabase/types";
 
 // Type guard function to validate RunclubProfile shape
 function isRunclubProfile(obj: unknown): obj is RunclubProfile {
@@ -12,6 +13,13 @@ function isRunclubProfile(obj: unknown): obj is RunclubProfile {
     ('id' in profile && typeof profile.id === 'string') ||
     ('user_id' in profile && typeof profile.user_id === 'string')
   );
+}
+
+// Helper to safely convert Json to Record<string, any>
+function safeJsonToRecord(json: Json | null): Record<string, any> | null {
+  if (json === null) return null;
+  if (typeof json === 'object' && json !== null) return json as Record<string, any>;
+  return null;
 }
 
 export async function fetchOpportunityApplications(opportunityId: string) {
@@ -94,7 +102,7 @@ export async function fetchOpportunityApplications(opportunityId: string) {
         // Map each profile to its ID with proper type handling
         for (const rawProfile of profiles) {
           if (rawProfile && rawProfile.id) {
-            // Create a properly shaped RunclubProfile without deep instantiation
+            // Create a properly shaped RunclubProfile
             const typedProfile: RunclubProfile = {
               id: rawProfile.id,
               club_name: rawProfile.club_name,
@@ -103,11 +111,11 @@ export async function fetchOpportunityApplications(opportunityId: string) {
               description: rawProfile.description,
               website: rawProfile.website,
               logo_url: rawProfile.logo_url,
-              community_data: rawProfile.community_data,
-              social_media: rawProfile.social_media,
+              community_data: safeJsonToRecord(rawProfile.community_data),
+              social_media: safeJsonToRecord(rawProfile.social_media),
               created_at: rawProfile.created_at,
               updated_at: rawProfile.updated_at,
-              user_id: rawProfile.user_id
+              user_id: rawProfile.id // Use ID as user_id if it's missing
             };
             profileMap[rawProfile.id] = typedProfile;
           }
@@ -115,23 +123,23 @@ export async function fetchOpportunityApplications(opportunityId: string) {
       } else {
         console.log("No profiles found with primary key match, trying user_id field");
         
-        // Try alternate lookup by user_id field
+        // Try alternate lookup by user_id field - in this case, we need to add user_id field to our query
         const { data: altProfiles, error: altProfilesError } = await supabase
           .from("runclub_profiles")
-          .select("*")
+          .select("*, user_id")
           .in("user_id", userIds);
           
         if (!altProfilesError && altProfiles && altProfiles.length > 0) {
           console.log("Found profiles via user_id field:", altProfiles.length);
           
-          // Map each profile by user_id for lookup with explicit property access
+          // Map each profile by user_id for lookup
           for (const rawProfile of altProfiles) {
             if (rawProfile) {
               // Create a key for the map - either user_id or id
               const mapKey = rawProfile.user_id || rawProfile.id;
               
               if (mapKey) {
-                // Create a properly shaped RunclubProfile without deep instantiation
+                // Create a properly shaped RunclubProfile
                 const typedProfile: RunclubProfile = {
                   id: rawProfile.id,
                   club_name: rawProfile.club_name,
@@ -140,11 +148,11 @@ export async function fetchOpportunityApplications(opportunityId: string) {
                   description: rawProfile.description,
                   website: rawProfile.website,
                   logo_url: rawProfile.logo_url,
-                  community_data: rawProfile.community_data,
-                  social_media: rawProfile.social_media,
+                  community_data: safeJsonToRecord(rawProfile.community_data),
+                  social_media: safeJsonToRecord(rawProfile.social_media),
                   created_at: rawProfile.created_at,
                   updated_at: rawProfile.updated_at,
-                  user_id: rawProfile.user_id
+                  user_id: rawProfile.user_id || rawProfile.id // Use either user_id or fall back to id
                 };
                 profileMap[mapKey] = typedProfile;
               }
