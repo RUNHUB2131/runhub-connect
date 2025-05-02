@@ -25,7 +25,8 @@ export function useApplications(opportunityId: string | undefined) {
       const { data, error } = await fetchOpportunityById(opportunityId);
       if (error) throw new Error(error);
       return data as Opportunity;
-    }
+    },
+    enabled: !!opportunityId
   });
 
   const { 
@@ -43,7 +44,8 @@ export function useApplications(opportunityId: string | undefined) {
       console.log("Fetched applications data:", data);
       return data as Application[] || [];
     },
-    retry: 1
+    retry: 1,
+    enabled: !!opportunityId
   });
 
   // Debug applications data
@@ -70,6 +72,11 @@ export function useApplications(opportunityId: string | undefined) {
       });
     } catch (error) {
       console.error("Error refreshing data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh data. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsRefreshing(false);
     }

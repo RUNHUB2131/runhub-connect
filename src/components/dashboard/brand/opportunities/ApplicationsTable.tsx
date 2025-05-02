@@ -37,29 +37,41 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
   onAcceptApplication,
   onRejectApplication
 }) => {
+  // Debug log to see what data we're receiving
+  console.log("Applications data in table:", applications);
+
   // Safe accessor functions for profile data
   const getClubName = (application: Application) => {
-    return application?.runclub_profile?.club_name || 'Unnamed Run Club';
+    if (!application?.runclub_profile) return 'Unnamed Run Club';
+    return application.runclub_profile.club_name || 'Unnamed Run Club';
   };
 
   const getLocation = (application: Application) => {
-    return application?.runclub_profile?.location || 'Unknown';
+    if (!application?.runclub_profile) return 'Unknown';
+    return application.runclub_profile.location || 'Unknown';
   };
 
   const getMemberCount = (application: Application) => {
-    return application?.runclub_profile?.member_count || '0';
+    if (!application?.runclub_profile) return '0';
+    return application.runclub_profile.member_count?.toString() || '0';
   };
   
   const getDescription = (application: Application) => {
-    return application?.runclub_profile?.description || 'No description available';
+    if (!application?.runclub_profile) return 'No description available';
+    return application.runclub_profile.description || 'No description available';
   };
   
   const getWebsite = (application: Application) => {
-    return application?.runclub_profile?.website || '';
+    if (!application?.runclub_profile) return '';
+    return application.runclub_profile.website || '';
   };
   
   const getSocialMedia = (application: Application) => {
-    const social = application?.runclub_profile?.social_media || {};
+    if (!application?.runclub_profile || !application.runclub_profile.social_media) {
+      return { instagram: '', followers: 0 };
+    }
+    
+    const social = application.runclub_profile.social_media;
     return {
       instagram: social.instagram?.handle || '',
       followers: social.instagram?.followers || 0
@@ -95,7 +107,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
       return;
     }
     
-    // Use the profile ID if it exists, otherwise use the user_id
+    // Use the profile ID from the runclub_profile
     const profileId = application.runclub_profile.id;
     
     console.log("Profile ID to view:", profileId);
