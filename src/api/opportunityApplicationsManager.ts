@@ -121,44 +121,17 @@ export async function fetchOpportunityApplications(opportunityId: string) {
           }
         }
       } else {
-        console.log("No profiles found with primary key match, trying user_id field");
+        console.log("No profiles found with primary key match, trying alternate approach");
         
-        // Try alternate lookup by user_id field - in this case, we need to add user_id field to our query
-        const { data: altProfiles, error: altProfilesError } = await supabase
-          .from("runclub_profiles")
-          .select("*, user_id")
-          .in("user_id", userIds);
-          
-        if (!altProfilesError && altProfiles && altProfiles.length > 0) {
-          console.log("Found profiles via user_id field:", altProfiles.length);
-          
-          // Map each profile by user_id for lookup
-          for (const rawProfile of altProfiles) {
-            if (rawProfile) {
-              // Create a key for the map - either user_id or id
-              const mapKey = rawProfile.user_id || rawProfile.id;
-              
-              if (mapKey) {
-                // Create a properly shaped RunclubProfile
-                const typedProfile: RunclubProfile = {
-                  id: rawProfile.id,
-                  club_name: rawProfile.club_name,
-                  location: rawProfile.location,
-                  member_count: rawProfile.member_count,
-                  description: rawProfile.description,
-                  website: rawProfile.website,
-                  logo_url: rawProfile.logo_url,
-                  community_data: safeJsonToRecord(rawProfile.community_data),
-                  social_media: safeJsonToRecord(rawProfile.social_media),
-                  created_at: rawProfile.created_at,
-                  updated_at: rawProfile.updated_at,
-                  user_id: rawProfile.user_id || rawProfile.id // Use either user_id or fall back to id
-                };
-                profileMap[mapKey] = typedProfile;
-              }
-            }
-          }
-        }
+        // After analyzing the errors, it's clear that user_id doesn't exist in runclub_profiles table
+        // Instead, we'll try a different approach - assuming the id in runclub_profiles is what we need
+        
+        // Since we've already tried with ID matching above and it didn't work,
+        // we could try a different approach if needed here
+        console.log("No profiles found via direct ID match. This could indicate that user IDs and profile IDs don't match.");
+        
+        // We won't add additional queries here since the schema doesn't support it,
+        // but we'll leave this section for potential future schema updates
       }
       
       // Map applications to their profiles
