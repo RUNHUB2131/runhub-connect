@@ -1,9 +1,13 @@
+// This file is deprecated - functionality moved to client/opportunity-client.ts
+// Left for reference until full migration is complete
 
 import { supabase } from "@/integrations/supabase/client";
 import { OpportunityFormValues } from "@/schemas/opportunityFormSchema";
 import { Opportunity } from "./types/opportunity.types";
 
+// DEPRECATED: Use api.opportunities.createOpportunity instead
 export async function createOpportunity(opportunityData: OpportunityFormValues) {
+  console.log("DEPRECATED: Use api.opportunities.createOpportunity instead");
   try {
     // Get the current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -40,7 +44,9 @@ export async function createOpportunity(opportunityData: OpportunityFormValues) 
   }
 }
 
+// DEPRECATED: Use api.opportunities.fetchBrandOpportunities instead
 export async function fetchBrandOpportunities() {
+  console.log("DEPRECATED: Use api.opportunities.fetchBrandOpportunities instead");
   try {
     // Get the current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -67,7 +73,9 @@ export async function fetchBrandOpportunities() {
   }
 }
 
+// DEPRECATED: Use api.opportunities.fetchAllOpportunities instead
 export async function fetchAllOpportunities() {
+  console.log("DEPRECATED: Use api.opportunities.fetchAllOpportunities instead");
   try {
     // Fetch all active opportunities
     const { data, error } = await supabase
@@ -87,7 +95,9 @@ export async function fetchAllOpportunities() {
   }
 }
 
+// DEPRECATED: Use api.opportunities.fetchOpportunityById instead
 export async function fetchOpportunityById(id: string) {
+  console.log("DEPRECATED: Use api.opportunities.fetchOpportunityById instead");
   try {
     const { data, error } = await supabase
       .from("opportunities")
@@ -106,7 +116,9 @@ export async function fetchOpportunityById(id: string) {
   }
 }
 
+// DEPRECATED: Use api.opportunities.deleteOpportunity instead
 export async function deleteOpportunity(id: string) {
+  console.log("DEPRECATED: Use api.opportunities.deleteOpportunity instead");
   try {
     console.log("Starting deleteOpportunity for ID:", id);
     

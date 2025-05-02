@@ -1,3 +1,5 @@
+// This file is now deprecated - functionality moved to client/opportunity-client.ts
+// Left for reference until full migration is complete
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Application, RunclubProfile } from "./types/opportunity.types";
@@ -22,7 +24,9 @@ function safeJsonToRecord(json: Json | null): Record<string, any> | null {
   return null;
 }
 
+// DEPRECATED: Use api.runclubs.fetchOpportunityApplications instead
 export async function fetchOpportunityApplications(opportunityId: string) {
+  console.log("DEPRECATED: Use api.opportunities.fetchOpportunityApplications instead");
   console.log("START: fetchOpportunityApplications for ID:", opportunityId);
   
   if (!opportunityId) {
@@ -161,7 +165,9 @@ export async function fetchOpportunityApplications(opportunityId: string) {
   }
 }
 
+// DEPRECATED: Use api.opportunities.updateApplicationStatus instead
 export async function updateApplicationStatus(applicationId: string, status: string) {
+  console.log("DEPRECATED: Use api.opportunities.updateApplicationStatus instead");
   try {
     // Get the current user (brand)
     const { data: { user }, error: userError } = await supabase.auth.getUser();
