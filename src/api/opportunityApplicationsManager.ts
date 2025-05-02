@@ -2,6 +2,18 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Application, RunclubProfile } from "./types/opportunity.types";
 
+// Type guard function to validate RunclubProfile shape
+function isRunclubProfile(obj: unknown): obj is RunclubProfile {
+  if (!obj || typeof obj !== 'object') return false;
+  
+  // Basic structure validation - add more properties as needed
+  const profile = obj as Record<string, unknown>;
+  return (
+    ('id' in profile && typeof profile.id === 'string') ||
+    ('user_id' in profile && typeof profile.user_id === 'string')
+  );
+}
+
 export async function fetchOpportunityApplications(opportunityId: string) {
   console.log("START: fetchOpportunityApplications for ID:", opportunityId);
   
@@ -67,24 +79,39 @@ export async function fetchOpportunityApplications(opportunityId: string) {
       const userIds = applications.map(app => app.user_id);
       console.log("User IDs to fetch profiles for:", userIds);
       
+      // Create a map for profiles with explicit typing
+      const profileMap: Record<string, RunclubProfile> = {};
+      
       // Fetch runclub profiles
       const { data: profiles, error: profilesError } = await supabase
         .from("runclub_profiles")
         .select("*")
         .in("id", userIds);
         
-      // Create a map to store profiles by ID for quick lookup
-      const profileMap: Record<string, RunclubProfile> = {};
-      
       if (!profilesError && profiles && profiles.length > 0) {
         console.log("Fetched profiles:", profiles.length);
         
-        // Map each profile to its ID
-        profiles.forEach((profile: any) => {
-          if (profile && profile.id) {
-            profileMap[profile.id] = profile as RunclubProfile;
+        // Map each profile to its ID with proper type handling
+        for (const rawProfile of profiles) {
+          if (rawProfile && rawProfile.id) {
+            // Create a properly shaped RunclubProfile without deep instantiation
+            const typedProfile: RunclubProfile = {
+              id: rawProfile.id,
+              club_name: rawProfile.club_name,
+              location: rawProfile.location,
+              member_count: rawProfile.member_count,
+              description: rawProfile.description,
+              website: rawProfile.website,
+              logo_url: rawProfile.logo_url,
+              community_data: rawProfile.community_data,
+              social_media: rawProfile.social_media,
+              created_at: rawProfile.created_at,
+              updated_at: rawProfile.updated_at,
+              user_id: rawProfile.user_id
+            };
+            profileMap[rawProfile.id] = typedProfile;
           }
-        });
+        }
       } else {
         console.log("No profiles found with primary key match, trying user_id field");
         
@@ -97,24 +124,39 @@ export async function fetchOpportunityApplications(opportunityId: string) {
         if (!altProfilesError && altProfiles && altProfiles.length > 0) {
           console.log("Found profiles via user_id field:", altProfiles.length);
           
-          // Map each profile by user_id for lookup - Fix for TypeScript error
-          altProfiles.forEach((profile: any) => {
-            if (profile) {
-              // Use type assertion to avoid deep type instantiation
-              const profileData = profile as unknown as RunclubProfile;
-              const mapKey = profileData.user_id || profileData.id;
+          // Map each profile by user_id for lookup with explicit property access
+          for (const rawProfile of altProfiles) {
+            if (rawProfile) {
+              // Create a key for the map - either user_id or id
+              const mapKey = rawProfile.user_id || rawProfile.id;
               
               if (mapKey) {
-                profileMap[mapKey] = profileData;
+                // Create a properly shaped RunclubProfile without deep instantiation
+                const typedProfile: RunclubProfile = {
+                  id: rawProfile.id,
+                  club_name: rawProfile.club_name,
+                  location: rawProfile.location,
+                  member_count: rawProfile.member_count,
+                  description: rawProfile.description,
+                  website: rawProfile.website,
+                  logo_url: rawProfile.logo_url,
+                  community_data: rawProfile.community_data,
+                  social_media: rawProfile.social_media,
+                  created_at: rawProfile.created_at,
+                  updated_at: rawProfile.updated_at,
+                  user_id: rawProfile.user_id
+                };
+                profileMap[mapKey] = typedProfile;
               }
             }
-          });
+          }
         }
       }
       
       // Map applications to their profiles
       for (const app of applications) {
-        applicationsWithProfiles.push({
+        // Create properly typed application with profile
+        const application: Application = {
           id: app.id,
           opportunity_id: app.opportunity_id,
           user_id: app.user_id,
@@ -122,7 +164,9 @@ export async function fetchOpportunityApplications(opportunityId: string) {
           created_at: app.created_at,
           updated_at: app.updated_at,
           runclub_profile: profileMap[app.user_id] || null
-        });
+        };
+        
+        applicationsWithProfiles.push(application);
       }
     }
     
